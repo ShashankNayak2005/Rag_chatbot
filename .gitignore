@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments & Virtual Envs
+.env
+.env.local
+.env.*
+venv/
+.venv/
+env/
+ENV/
+
+# ChromaDB & Vector Store local databases
+chroma_db/
+chroma_db*/
+test_temp_db/
+*.db
+*.sqlite3
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local session files
+data/conversation_history.json
+
+# IDE & OS caches
+.DS_Store
+.idea/
+.vscode/
+*.swp

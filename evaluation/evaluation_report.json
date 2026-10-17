@@ -1,0 +1,15 @@
+{
+  "total_evaluated_questions": 22,
+  "supported_questions_count": 14,
+  "supported_answer_accuracy_pct": 100.0,
+  "unsupported_questions_count": 8,
+  "unsupported_question_rejection_rate_pct": 100.0,
+  "retrieval_hit_rate_pct": 92.86,
+  "paraphrase_questions_count": 4,
+  "paraphrase_success_rate_pct": 100.0,
+  "citations_generated_count": 14,
+  "citation_validity_pct": 100.0,
+  "unsupported_claim_rate_pct": 0.0,
+  "document_validation_success_pct": 100.0,
+  "operational_error_handling_pct": 100.0
+}

@@ -1,0 +1,5 @@
+Company: Datavex
+Founded: 2020
+Headquarters: Bengaluru
+Main services: AI solutions and data engineering
+Employees: 50

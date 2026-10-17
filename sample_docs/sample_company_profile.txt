@@ -1,0 +1,10 @@
+NEXA CORP - CORPORATE OVERVIEW
+
+Section 1: Company History and Inception
+Nexa Corp was founded on March 15, 2014, by Dr. Elena Vance and Marcus Thorne in Austin, Texas. The company was established with the vision of developing enterprise cloud intelligence platforms. In its first year, the founders secured seed funding of $2.5 million from Horizon Ventures.
+
+Section 2: Products and Services
+Nexa Corp specializes in automated data pipelines, predictive analytics engines, and real-time streaming architectures. Its flagship platform, NexaStream, serves over 500 enterprise customers globally.
+
+Section 3: Operations and Workforce
+As of 2026, the company operates regional headquarters in London, Singapore, and New York, employing more than 1,200 full-time engineers and researchers.

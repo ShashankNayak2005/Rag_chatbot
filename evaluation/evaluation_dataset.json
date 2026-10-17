@@ -1,0 +1,211 @@
+{
+  "dataset_version": "1.0",
+  "description": "Evaluation dataset for Document Question-Answering RAG system across multiple documents and categories",
+  "documents": [
+    {
+      "document_file": "sample_documents/datavex_sample.txt",
+      "document_name": "Datavex Company Profile",
+      "test_cases": [
+        {
+          "id": "DV-01",
+          "assignment_case": "TC1",
+          "question": "When was the company founded?",
+          "is_supported": true,
+          "expected_keywords": ["2020"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-02",
+          "assignment_case": "TC2",
+          "question": "Where is the headquarters?",
+          "is_supported": true,
+          "expected_keywords": ["Bengaluru"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-03",
+          "assignment_case": "TC3",
+          "question": "How many employees are there?",
+          "is_supported": true,
+          "expected_keywords": ["50"],
+          "category": "numerical",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-04",
+          "assignment_case": "TC4",
+          "question": "Who is the CEO?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-05",
+          "assignment_case": "TC6",
+          "question": "What is the capital of Japan?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "out_of_domain",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-06",
+          "assignment_case": "TC7",
+          "question": "In what year did Datavex begin operations?",
+          "is_supported": true,
+          "expected_keywords": ["2020"],
+          "category": "paraphrase",
+          "is_paraphrase": true
+        },
+        {
+          "id": "DV-07",
+          "assignment_case": "TC8",
+          "question": "Which city is Datavex based in?",
+          "is_supported": true,
+          "expected_keywords": ["Bengaluru"],
+          "category": "paraphrase",
+          "is_paraphrase": true
+        },
+        {
+          "id": "DV-08",
+          "assignment_case": "TC9",
+          "question": "How large is the company's workforce?",
+          "is_supported": true,
+          "expected_keywords": ["50"],
+          "category": "paraphrase",
+          "is_paraphrase": true
+        },
+        {
+          "id": "DV-09",
+          "assignment_case": "TC10",
+          "question": "What kind of services does Datavex offer?",
+          "is_supported": true,
+          "expected_keywords": ["AI solutions", "data engineering"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-10",
+          "assignment_case": "TC11",
+          "question": "Who established Datavex?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        },
+        {
+          "id": "DV-11",
+          "assignment_case": "TC12",
+          "question": "What is Datavex's annual revenue?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        }
+      ]
+    },
+    {
+      "document_file": "sample_documents/coastaltech_sample.txt",
+      "document_name": "CoastalTech Unseen Profile",
+      "test_cases": [
+        {
+          "id": "CT-01",
+          "question": "When was CoastalTech established?",
+          "is_supported": true,
+          "expected_keywords": ["2018"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "CT-02",
+          "question": "Where is its main office?",
+          "is_supported": true,
+          "expected_keywords": ["Mangaluru"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "CT-03",
+          "question": "How many people work for the organization?",
+          "is_supported": true,
+          "expected_keywords": ["120"],
+          "category": "numerical",
+          "is_paraphrase": false
+        },
+        {
+          "id": "CT-04",
+          "question": "What areas does it provide services in?",
+          "is_supported": true,
+          "expected_keywords": ["cloud consulting", "cybersecurity"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "CT-05",
+          "question": "Which services does CoastalTech offer?",
+          "is_supported": true,
+          "expected_keywords": ["cloud consulting", "cybersecurity"],
+          "category": "paraphrase",
+          "is_paraphrase": true
+        },
+        {
+          "id": "CT-06",
+          "question": "What is CoastalTech's annual revenue?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        },
+        {
+          "id": "CT-07",
+          "question": "Who is the CEO of CoastalTech?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        }
+      ]
+    },
+    {
+      "document_file": "sample_docs/sample_report.txt",
+      "document_name": "Solar PV Technical Report",
+      "test_cases": [
+        {
+          "id": "PV-01",
+          "question": "What are the primary components of a grid-connected photovoltaic installation?",
+          "is_supported": true,
+          "expected_keywords": ["photovoltaic", "inverter"],
+          "category": "factual",
+          "is_paraphrase": false
+        },
+        {
+          "id": "PV-02",
+          "question": "What is the energy conversion efficiency of monocrystalline silicon panels?",
+          "is_supported": true,
+          "expected_keywords": ["20%", "24%"],
+          "category": "numerical",
+          "is_paraphrase": false
+        },
+        {
+          "id": "PV-03",
+          "question": "Who is the CEO of the solar installation company?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        },
+        {
+          "id": "PV-04",
+          "question": "What was the annual revenue generated by the solar plant in 2023?",
+          "is_supported": false,
+          "expected_keywords": ["ANSWER_NOT_FOUND_IN_DOCUMENT"],
+          "category": "negative_guardrail",
+          "is_paraphrase": false
+        }
+      ]
+    }
+  ]
+}
