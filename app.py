@@ -33,7 +33,7 @@ from src.retriever import SemanticRetriever
 
 import src.qa_engine
 importlib.reload(src.qa_engine)
-from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT
+from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT, strip_source_citation_text
 from src.config import settings
 
 # Path for persistent conversation history
@@ -692,11 +692,12 @@ for idx, msg in enumerate(st.session_state.messages):
                             threshold=distance_threshold,
                             use_llm=False,
                         )
-                        msg["content"] = fb_res.answer
+                        clean_fb_ans = strip_source_citation_text(fb_res.answer)
+                        msg["content"] = clean_fb_ans
                         msg["response_data"] = {
                             "status": fb_res.status,
                             "is_found": fb_res.is_found,
-                            "answer": fb_res.answer,
+                            "answer": clean_fb_ans,
                             "question": fb_res.question,
                             "source_filename": fb_res.source_filename,
                             "page_number": fb_res.page_number,
@@ -728,7 +729,8 @@ for idx, msg in enumerate(st.session_state.messages):
 
             # Case C: Grounded Answer
             else:
-                st.markdown(content)
+                clean_content = strip_source_citation_text(content)
+                st.markdown(clean_content)
 
                 source_file = html.escape(str(resp_data.get("source_filename", "N/A")))
                 page_num = html.escape(str(resp_data.get("page_number", "1")))
@@ -809,14 +811,15 @@ if st.session_state.pending_chat_prompt:
                 )
 
             # Record assistant response
+            clean_answer = strip_source_citation_text(res.answer)
             asst_msg = {
                 "role": "assistant",
-                "content": res.answer,
+                "content": clean_answer,
                 "timestamp": datetime.now().strftime("%I:%M %p"),
                 "response_data": {
                     "status": res.status,
                     "is_found": res.is_found,
-                    "answer": res.answer,
+                    "answer": clean_answer,
                     "question": res.question,
                     "source_filename": res.source_filename,
                     "page_number": res.page_number,

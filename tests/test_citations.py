@@ -13,7 +13,7 @@ from src.text_chunker import chunk_document
 from src.embedding_service import EmbeddingService
 from src.vector_store import ChromaVectorStore
 from src.retriever import SemanticRetriever
-from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT
+from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT, strip_source_citation_text
 from src.config import settings
 
 
@@ -92,3 +92,60 @@ def test_no_citations_for_unsupported_questions(tmp_path):
     assert res.answer == ANSWER_NOT_FOUND_IN_DOCUMENT
     assert res.supporting_passage is None
     assert res.source_filename is None
+
+
+def test_strip_source_citation_text_variations():
+    """Verify that redundant trailing citation strings are cleanly stripped from answer text."""
+    # Pattern: Source: file, page, chunk
+    raw1 = "The company was founded in **2020**.\n\nSource: test.pdf, page 1, chunk 1"
+    assert strip_source_citation_text(raw1) == "The company was founded in **2020**."
+
+    # Pattern: **Source:** file, page, chunk
+    raw2 = "Founded in 2020.\n\n**Source:** data.pdf, page 2, chunk 3"
+    assert strip_source_citation_text(raw2) == "Founded in 2020."
+
+    # Pattern: Bracketed
+    raw3 = "Revenue reached $5M. [test.txt, page 1, chunk 2]"
+    assert strip_source_citation_text(raw3) == "Revenue reached $5M."
+
+    # Pattern: Parenthesized
+    raw4 = "Solar efficiency is 24%. (Source: report.pdf, page 3, chunk 1)"
+    assert strip_source_citation_text(raw4) == "Solar efficiency is 24%."
+
+    # Pattern: Negative refusal remains intact
+    assert strip_source_citation_text(ANSWER_NOT_FOUND_IN_DOCUMENT) == ANSWER_NOT_FOUND_IN_DOCUMENT
+
+    # Pattern: Normal text without trailing citation
+    clean = "Datavex was founded in 2020 in Bengaluru."
+    assert strip_source_citation_text(clean) == clean
+
+
+def test_qa_engine_strips_duplicate_citation_from_llm_answer(tmp_path):
+    """Verify QAEngine removes LLM-appended 'Source: ...' citations from res.answer while keeping metadata."""
+    text = "Datavex was founded in 2020. Headquarters is in Bengaluru."
+    doc = load_document(text.encode("utf-8"), filename="test.txt")
+    chunks = chunk_document(doc, chunk_size=150, chunk_overlap=20)
+
+    embedder = EmbeddingService(settings.embedding_model)
+    vstore = ChromaVectorStore(persist_directory=str(tmp_path / "chroma_cite_strip"), collection_name="cite_strip")
+    retriever = SemanticRetriever(vstore, embedder, distance_threshold=0.85)
+    retriever.index_document(doc, chunks)
+
+    mock_client = MagicMock()
+    # LLM returns text with appended Source line
+    mock_client.chat.completions.create.return_value = make_mock_completion(
+        "The company was founded in **2020**.\n\nSource: test.pdf, page 1, chunk 1"
+    )
+
+    qa = QAEngine(retriever=retriever, api_key="dummy", openai_client=mock_client)
+    res = qa.answer_question("When was the company founded?", document_id=doc.document_id)
+
+    assert res.is_found is True
+    # The duplicate text citation must be stripped from res.answer
+    assert res.answer == "The company was founded in **2020**."
+    assert "Source:" not in res.answer
+    # But the metadata fields must be preserved
+    assert res.source_filename == "test.txt"
+    assert res.page_number is not None
+    assert res.chunk_id is not None
+
