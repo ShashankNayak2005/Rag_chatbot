@@ -885,31 +885,31 @@ st.markdown(
 with st.sidebar:
     st.header("⚙️ Settings & Configuration")
 
-    st.subheader("⚡ Groq LLM Service")
+    st.subheader("⚡ Cloud LLM Service")
     api_key_input = st.text_input(
-        "Groq API Key",
+        "LLM API Key",
         value=settings.active_api_key if settings.has_api_key else "",
         type="password",
         placeholder="Configured in .env or enter here...",
-        help="Groq API key for high-speed LPU inference. Kept server-side.",
+        help="API key for high-speed cloud model inference. Kept secure and server-side.",
     )
     base_url_input = st.text_input(
         "API Base URL",
         value=settings.active_base_url,
-        help="Groq OpenAI-compatible endpoint URL.",
+        help="OpenAI-compatible inference endpoint URL.",
     )
     model_input = st.text_input(
         "Chat Model",
         value=settings.active_model,
-        help="Target Groq model identifier.",
+        help="Target chat model identifier.",
     )
 
     st.markdown("---")
     st.subheader("Synthesis Engine Mode")
     generation_mode = st.radio(
         "Answer Generation Mode",
-        ["⚡ Natural Language Generation (Groq LLM)", "⚡ Local Extractive Fallback (Zero-Cost / Offline)"],
-        help="Use Groq LLM for natural-language generation, or Local Extractive Synthesis if offline.",
+        ["⚡ Natural Language Generation (Cloud LLM)", "⚡ Local Extractive Fallback (Zero-Cost / Offline)"],
+        help="Use Cloud LLM for natural-language generation, or Local Extractive Synthesis if offline.",
     )
     use_llm = generation_mode.startswith("⚡ Natural Language")
 
@@ -931,20 +931,20 @@ with st.sidebar:
         help="Cosine distance cutoff (smaller = closer). Passages with distance > threshold are rejected.",
     )
     chunk_size = st.number_input(
-        "Chunk Size (~tokens)",
+        "Chunk Size (characters / ~200 tokens)",
         min_value=100,
         max_value=1500,
-        value=700,
+        value=800,
         step=50,
-        help="Approximate tokens per chunk.",
+        help="Target chunk size in characters (~200 tokens, calibrated for 256-token limit of all-MiniLM-L6-v2).",
     )
     chunk_overlap = st.number_input(
-        "Chunk Overlap (~tokens)",
+        "Chunk Overlap (characters / ~40 tokens)",
         min_value=0,
         max_value=300,
-        value=100,
+        value=150,
         step=20,
-        help="Overlap tokens between adjacent chunks.",
+        help="Overlap characters between adjacent chunks.",
     )
 
     st.markdown("---")

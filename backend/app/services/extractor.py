@@ -94,7 +94,7 @@ def extract_text_from_pdf(filename: str, file_bytes: bytes) -> ExtractionResult:
 
         if total_chars == 0 or len(pages) == 0:
             raise NoExtractableTextError(
-                f"The PDF '{filename}' contains no extractable text. Scanned or image-only documents are unsupported."
+                f"The PDF '{filename}' contains no extractable text. Scanned or image-only documents require OCR (Optical Character Recognition) to be processed."
             )
 
         return ExtractionResult(

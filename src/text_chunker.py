@@ -23,15 +23,34 @@ class PassageChunk:
     @property
     def estimated_tokens(self) -> int:
         """Approximate token count (standard ~4 characters per token)."""
-        return max(1, len(self.text) // 4)
+        return approx_token_count(self.text)
+
+
+def approx_token_count(text: str) -> int:
+    """Approximate subword token count (~3.8 characters per token for English text)."""
+    if not text:
+        return 0
+    return max(1, int(len(text) / 3.8))
+
+
+def split_sentences(text: str) -> List[str]:
+    """Split text into sentences while preserving natural sentence terminators."""
+    import re
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
 
 
 class TextChunker:
-    """Sliding-window chunker with boundary lookback for natural sentence preservation."""
+    """Sliding-window chunker with boundary lookback for natural sentence preservation.
+    
+    Calibrated to respect sentence-transformers/all-MiniLM-L6-v2 maximum sequence length
+    of 256 tokens. A target of ~800 characters (~200 tokens) with ~150 characters (~35-40 tokens)
+    overlap ensures zero silent truncation by the embedding model.
+    """
 
-    # Defaults approximately corresponding to ~700 tokens chunk / ~100 tokens overlap (4 chars/token)
-    DEFAULT_CHUNK_SIZE = 1600  # ~400 tokens, ideal balance for dense retrieval & LLM context
-    DEFAULT_CHUNK_OVERLAP = 200  # ~50 tokens
+    MAX_EMBEDDING_TOKENS = 256
+    # 800 chars ~ 200 tokens, safely within 256 token limit of all-MiniLM-L6-v2
+    DEFAULT_CHUNK_SIZE = 800
+    DEFAULT_CHUNK_OVERLAP = 150
 
     def __init__(self, chunk_size: int = DEFAULT_CHUNK_SIZE, chunk_overlap: int = DEFAULT_CHUNK_OVERLAP):
         if chunk_size <= 0:

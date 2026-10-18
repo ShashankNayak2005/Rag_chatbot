@@ -29,8 +29,8 @@ class Settings:
     retrieval_distance_threshold: float = float(os.getenv("RETRIEVAL_DISTANCE_THRESHOLD", "0.85"))
     top_k: int = int(os.getenv("TOP_K", "4"))
     retrieval_top_k: int = int(os.getenv("TOP_K", "4"))
-    chunk_size: int = int(os.getenv("CHUNK_SIZE", "700"))
-    chunk_overlap: int = int(os.getenv("CHUNK_OVERLAP", "100"))
+    chunk_size: int = int(os.getenv("CHUNK_SIZE", "800"))
+    chunk_overlap: int = int(os.getenv("CHUNK_OVERLAP", "150"))
 
     @property
     def has_api_key(self) -> bool:

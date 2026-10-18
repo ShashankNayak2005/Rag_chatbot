@@ -43,6 +43,24 @@ class EmbeddingService:
                 "Note: an active internet connection is required for the initial model download from Hugging Face."
             ) from e
 
+    @property
+    def max_seq_length(self) -> int:
+        """Return the maximum sequence length (in tokens) supported by the underlying model."""
+        model = self._get_model()
+        return getattr(model, "max_seq_length", 256)
+
+    def check_truncation(self, text: str) -> bool:
+        """Check if a given text would exceed the tokenizer limit and be truncated."""
+        cleaned = text.strip()
+        if not cleaned:
+            return False
+        model = self._get_model()
+        if hasattr(model, "tokenizer") and model.tokenizer is not None:
+            tokens = model.tokenizer.tokenize(cleaned)
+            return len(tokens) > self.max_seq_length
+        # Fallback heuristic: 1 token is ~3.5 characters on average
+        return len(cleaned) > (self.max_seq_length * 3.5)
+
     def embed_text(self, text: str) -> List[float]:
         """Generate normalized embedding vector for a single string."""
         cleaned = text.strip()
@@ -50,6 +68,13 @@ class EmbeddingService:
             raise ValueError("Cannot generate embedding for empty text.")
 
         model = self._get_model()
+        if self.check_truncation(cleaned):
+            import logging
+            logging.getLogger(__name__).warning(
+                f"Text exceeds model max_seq_length ({self.max_seq_length} tokens). "
+                "Tokens beyond this limit will be truncated. Use appropriately sized chunks."
+            )
+
         try:
             # normalize_embeddings=True ensures cosine distance can be computed accurately
             embedding = model.encode(cleaned, normalize_embeddings=True)

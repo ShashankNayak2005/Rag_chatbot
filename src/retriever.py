@@ -51,7 +51,7 @@ SEMANTIC_DOMAINS = {
     "founding": {
         "q_patterns": [
             r"\b(?:founded|founding|established|establishment|inception|incorporated)\b",
-            r"\bwhen was (?:the )?(?:company|firm|datavex|it)\b",
+            r"\bwhen was (?:the )?(?:company|firm|organization|business|startup|it|[a-zA-Z0-9_-]+)\b",
             r"\b(?:what|which|in what|in which) year .*\b(?:start|founded|established|launch|begin)\b",
             r"\b(?:start|started|launch|launched|began) (?:operations|business)\b",
         ],
@@ -64,7 +64,7 @@ SEMANTIC_DOMAINS = {
         "q_patterns": [
             r"\b(?:headquarters|hq|main office|corporate office)\b",
             r"\b(?:located|location|based|situated|headquartered)\b",
-            r"\bwhere is (?:the )?(?:company|firm|headquarters|office|datavex|it)\b",
+            r"\bwhere is (?:the )?(?:company|firm|organization|business|headquarters|office|it|[a-zA-Z0-9_-]+)\b",
             r"\b(?:which city|what city|in which city)\b",
         ],
         "s_patterns": [

@@ -6,7 +6,7 @@
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-0.4%2B-orange.svg)](https://www.trychroma.com/)
 [![Groq Cloud](https://img.shields.io/badge/LLM-Groq%20Cloud-f55036.svg)](https://groq.com/)
 [![Sentence Transformers](https://img.shields.io/badge/Embeddings-all--MiniLM--L6--v2-green.svg)](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-[![Tests Passing](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-123%20passed-brightgreen.svg)]()
 
 An enterprise-grade, evidence-grounded **Retrieval-Augmented Generation (RAG)** application designed for high-accuracy question answering across structured and unstructured text documents (PDF and TXT). 
 
@@ -176,9 +176,10 @@ rag-chatbot/
 │   ├── run_evaluation.py           # Automated evaluation runner computing 8 quantitative metrics
 │   └── evaluation_report.json      # Generated benchmark report with accuracy & latency scores
 │
-└── tests/                          # Comprehensive automated unit & integration test suite (105 tests)
+└── tests/                          # Comprehensive automated unit & integration test suite (123 tests)
     ├── __init__.py                 # Test suite package initialiser
     ├── conftest.py                 # Pytest shared fixtures (mock data, temp vector stores)
+    ├── test_regression_suite.py    # Regression tests (tokenizer limit, abstention, citations, isolation, repeated uploads, API failures)
     ├── test_document_loader.py     # Tests for TXT/PDF ingestion, empty files, and corruption
     ├── test_text_chunker.py        # Tests for sliding window offsets, chunk sizes, and overlaps
     ├── test_chunker.py             # Boundary and token preservation tests
@@ -206,7 +207,7 @@ rag-chatbot/
 | **`sample_documents/`**| **Ground-Truth Data** | Contains the exact test documents (`datavex_sample.txt` and `coastaltech_sample.txt`) used by the CLI runner and acceptance tests to verify 100% answer accuracy. |
 | **`sample_docs/`** | **Multi-Format Assets** | Provides realistic multi-page PDFs (`sample_article.pdf`) and long technical reports (`sample_report.txt`) for validating page-number tracking, chunk overlap, and complex multi-page extraction. |
 | **`evaluation/`** | **Quantitative Benchmarking** | Houses the automated evaluation harness. `run_evaluation.py` evaluates 22 distinct questions across precision, recall, refusal accuracy, and citation provenance, generating a structured JSON audit report. |
-| **`tests/`** | **Automated Quality Gate** | 17 modular pytest files containing 105 automated tests that validate every component independently (loader, chunker, retriever, engine, citations) before production deployment. |
+| **`tests/`** | **Automated Quality Gate** | 18 modular pytest files containing 123 automated tests that validate every component independently (loader, chunker, retriever, engine, citations, regression suite) before production deployment. |
 | **`data/`** | **Runtime Persistence** | Local working directory for temporary run artifacts, persistent conversation dumps, and fallback data files. |
 
 ---
@@ -358,7 +359,7 @@ Interactive OpenAPI Swagger documentation will be available at:
 The codebase contains extensive automated test coverage ensuring 100% correctness across all modules.
 
 ### Running Pytest Suite
-Execute the entire test suite of 105 tests (runs 100% offline without consuming API tokens):
+Execute the entire test suite of 123 tests (runs 100% offline without consuming API tokens):
 
 ```bash
 python -m pytest -v
@@ -366,7 +367,7 @@ python -m pytest -v
 
 **Expected Output:**
 ```text
-============================= 105 passed in 14.82s =============================
+============================= 123 passed in 155.96s =============================
 ```
 
 #### Run Specific Modular Tests:

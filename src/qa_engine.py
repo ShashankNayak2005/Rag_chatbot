@@ -124,21 +124,25 @@ def validate_evidence(question: str, passages: List[Union[RetrievedPassage, Rank
         "question", "ask", "please", "me", "you", "them", "from", "have", "done", "that", "this"
     }
     q_tokens = [t for t in re.findall(r"\b[a-zA-Z0-9_-]{2,}\b", q_lower) if t not in stop_words]
+    overlap = []
     if q_tokens:
-        overlap = []
         for t in q_tokens:
             stem = t.rstrip("s").rstrip("es") if len(t) > 3 else t
             if t in combined_text or (len(stem) >= 3 and stem in combined_text):
                 overlap.append(t)
-        if overlap:
+        # Require substantial predicate overlap:
+        # A single generic match when the question has multiple content terms is insufficient
+        if len(q_tokens) <= 2 and len(overlap) >= 1:
+            return True
+        elif len(q_tokens) > 2 and (len(overlap) >= 2 or (len(overlap) / len(q_tokens)) >= 0.5):
             return True
 
     # 6. Semantic relevance fallback:
-    # If the top retrieved passage has reasonable cosine distance (<= 0.85) and no negative guardrail failed,
-    # allow grounded evaluation. The prompt strictly enforces ANSWER_NOT_FOUND_IN_DOCUMENT if facts absent.
+    # If the top retrieved passage has good cosine distance (<= 0.85) AND at least partial token overlap,
+    # allow grounded evaluation. Pure 0-overlap queries (out-of-domain) are blocked.
     best_p = passages[0]
     best_dist = getattr(best_p, "distance", 1.0)
-    if best_dist <= 0.85:
+    if overlap and best_dist <= 0.85:
         return True
 
     return False
@@ -217,9 +221,16 @@ class QAEngine:
                 fn = p.chunk.source_filename
                 pg = p.chunk.page_number
                 cid = p.chunk.chunk_id
-                txt = p.chunk.text
+            # Sanitize document text to prevent delimiter breakout injection attacks
+            safe_txt = (
+                txt.strip()
+                .replace("</document_excerpt>", "[/document_excerpt]")
+                .replace("<document_excerpt", "[document_excerpt")
+                .replace("</document_excerpts>", "[/document_excerpts]")
+                .replace("<document_excerpts>", "[document_excerpts]")
+            )
             formatted_excerpts.append(
-                f'<document_excerpt index="{i}" file="{fn}" page="{pg}" chunk="{cid}">\n{txt.strip()}\n</document_excerpt>'
+                f'<document_excerpt index="{i}" file="{fn}" page="{pg}" chunk="{cid}">\n{safe_txt}\n</document_excerpt>'
             )
 
         context_block = "\n\n".join(formatted_excerpts)
@@ -280,7 +291,7 @@ class QAEngine:
             # Numeric/interrogative match
             if re.search(r"\bwhen\b|\byear\b", q_lower) and re.search(r"\b(19\d\d|20\d\d)\b", sent):
                 score += 0.5
-            elif re.search(r"\bwhere\b|\bcity\b", q_lower) and any(w in s_lower for w in ["headquarters", "bengaluru", "located"]):
+            elif re.search(r"\bwhere\b|\bcity\b", q_lower) and any(w in s_lower for w in ["headquarters", "location", "located", "based", "city", "office", "hq"]):
                 score += 0.5
             elif re.search(r"\bhow many\b|\bemployees\b", q_lower) and re.search(r"\b\d+\b", sent):
                 score += 0.5
@@ -418,6 +429,7 @@ class QAEngine:
                     "chunk_id": p.chunk_id,
                     "distance": p.distance,
                     "similarity_score": p.similarity_score,
+                    "excerpt": p.text[:200].strip(),
                 })
             else:
                 citations.append({
@@ -426,6 +438,7 @@ class QAEngine:
                     "chunk_id": p.chunk.chunk_id,
                     "distance": p.distance,
                     "similarity_score": p.similarity_score,
+                    "excerpt": p.chunk.text[:200].strip(),
                 })
 
         # Step 5: Check if Groq LLM should be invoked
@@ -489,11 +502,31 @@ class QAEngine:
             raw_answer = response.choices[0].message.content.strip()
 
             # Normalize negative answer
+            refusal_patterns = [
+                ANSWER_NOT_FOUND_IN_DOCUMENT,
+                "not found in the document",
+                "not mentioned in the document",
+                "does not contain",
+                "does not mention",
+                "does not state",
+                "not provided in the document",
+                "no information in the document",
+                "not found in the provided",
+                "not mentioned in the provided",
+                "cannot answer based on",
+                "cannot be answered based on",
+                "insufficient information",
+                "is not stated",
+                "is not available in the document",
+                "the document does not provide",
+                "the excerpts do not provide",
+                "the provided text does not contain",
+            ]
+            raw_lower = raw_answer.lower()
             if (
                 ANSWER_NOT_FOUND_IN_DOCUMENT in raw_answer
                 or raw_answer.strip().upper().startswith("ANSWER_NOT_FOUND")
-                or "not found in the document" in raw_answer.lower()
-                or "not mentioned in the document" in raw_answer.lower()
+                or any(pat in raw_lower for pat in refusal_patterns)
             ):
                 return QAResponse(
                     question=clean_question,
