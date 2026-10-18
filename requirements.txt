@@ -15,7 +15,6 @@ scikit-learn>=1.3.0
 # Local Embeddings & Vector Database
 sentence-transformers>=2.2.0
 torch>=2.0.0
-torchvision>=0.15.0
 chromadb>=0.4.15
 
 # Groq LLM API (OpenAI-compatible Chat Completions)

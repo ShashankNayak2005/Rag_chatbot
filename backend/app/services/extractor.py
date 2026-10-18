@@ -6,6 +6,7 @@ import pymupdf as fitz
 from backend.app.services.exceptions import (
     UnsupportedFileTypeError,
     EmptyFileError,
+    FileTooLargeError,
     UnreadableDocumentError,
     NoExtractableTextError,
 )
@@ -27,8 +28,12 @@ class ExtractionResult:
     total_characters: int
 
 
-def validate_file_metadata(filename: str, file_bytes: bytes) -> str:
-    """Validate filename extension and non-empty byte payload. Returns lowercase extension."""
+def validate_file_metadata(
+    filename: str,
+    file_bytes: bytes,
+    max_bytes: int = 200 * 1024 * 1024,
+) -> str:
+    """Validate filename extension, non-empty byte payload, and max size. Returns lowercase extension."""
     if not filename:
         raise UnsupportedFileTypeError("Filename cannot be empty.")
     
@@ -42,6 +47,13 @@ def validate_file_metadata(filename: str, file_bytes: bytes) -> str:
     
     if len(file_bytes) == 0:
         raise EmptyFileError(f"The file '{filename}' is empty (0 bytes).")
+
+    if max_bytes is not None and len(file_bytes) > max_bytes:
+        size_mb = len(file_bytes) / (1024 * 1024)
+        max_mb = max_bytes / (1024 * 1024)
+        raise FileTooLargeError(
+            f"The file '{filename}' is {size_mb:.2f} MB, which exceeds the maximum limit of {max_mb:.2f} MB."
+        )
         
     return ext
 
@@ -107,9 +119,13 @@ def extract_text_from_pdf(filename: str, file_bytes: bytes) -> ExtractionResult:
         doc.close()
 
 
-def extract_document(filename: str, file_bytes: bytes) -> ExtractionResult:
+def extract_document(
+    filename: str,
+    file_bytes: bytes,
+    max_bytes: int = 200 * 1024 * 1024,
+) -> ExtractionResult:
     """High-level entrypoint to validate and extract text from supported documents."""
-    ext = validate_file_metadata(filename, file_bytes)
+    ext = validate_file_metadata(filename, file_bytes, max_bytes=max_bytes)
     if ext == ".txt":
         return extract_text_from_txt(filename, file_bytes)
     elif ext == ".pdf":

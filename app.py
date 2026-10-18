@@ -22,6 +22,7 @@ from src.document_loader import (
     load_document,
     DocumentValidationError,
     EmptyFileError,
+    FileTooLargeError,
     UnsupportedFileTypeError,
     UnreadableFileError,
     NoExtractableTextError,
@@ -31,10 +32,15 @@ from src.embedding_service import EmbeddingService
 from src.vector_store import ChromaVectorStore
 from src.retriever import SemanticRetriever
 
+import src.config
+importlib.reload(src.config)
+src.config.get_settings.cache_clear()
+settings = src.config.get_settings()
+
 import src.qa_engine
 importlib.reload(src.qa_engine)
 from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT
-from src.config import settings
+
 
 # Path for persistent conversation history
 CONVERSATION_HISTORY_FILE = Path("data/conversation_history.json")
@@ -115,6 +121,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Cache expensive resources globally across all sessions and reruns
+@st.cache_resource(show_spinner=False)
+def get_shared_embedding_service(model_name: str) -> EmbeddingService:
+    """Singleton cached embedding service."""
+    return EmbeddingService(model_name)
+
+
+@st.cache_resource(show_spinner=False)
+def get_shared_vector_store(persist_dir: str) -> ChromaVectorStore:
+    """Singleton cached ChromaDB store."""
+    return ChromaVectorStore(persist_directory=persist_dir)
+
+
 # Initialize session states
 if "qa_engine" not in st.session_state:
     st.session_state.qa_engine = None
@@ -132,12 +151,12 @@ if "pending_chat_prompt" not in st.session_state:
     st.session_state.pending_chat_prompt = None
 if "embedding_service" not in st.session_state:
     try:
-        st.session_state.embedding_service = EmbeddingService(settings.embedding_model)
+        st.session_state.embedding_service = get_shared_embedding_service(settings.embedding_model)
     except Exception:
         st.session_state.embedding_service = None
 if "vector_store" not in st.session_state:
     try:
-        st.session_state.vector_store = ChromaVectorStore(settings.chroma_persist_directory)
+        st.session_state.vector_store = get_shared_vector_store(settings.chroma_persist_directory)
     except Exception:
         st.session_state.vector_store = None
 
@@ -452,6 +471,145 @@ st.markdown(
     [data-theme="dark"] .header-status-card.empty .status-label, .stApp[data-theme="dark"] .header-status-card.empty .status-label { color: #94a3b8 !important; }
     [data-theme="dark"] .header-status-card.empty .status-filename, .stApp[data-theme="dark"] .header-status-card.empty .status-filename { color: #cbd5e1 !important; }
     [data-theme="dark"] .header-status-card.empty .status-chunks, .stApp[data-theme="dark"] .header-status-card.empty .status-chunks { color: #64748b !important; }
+
+    /* =========================================================================
+       HIGH-VISIBILITY CHAT ENTER BOX (BOLD HIGHLIGHTED BORDER & GLOW)
+       ========================================================================= */
+    div[data-testid="stBottom"], footer {
+        background: transparent !important;
+    }
+
+    div[data-testid="stChatInput"],
+    .stChatInput {
+        border-radius: 16px !important;
+        border: 2.5px solid #2563eb !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 18px rgba(37, 99, 235, 0.20), 0 0 0 1px rgba(37, 99, 235, 0.25) !important;
+        padding: 4px 8px !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    div[data-testid="stChatInput"] > div {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    div[data-testid="stChatInput"]:hover,
+    .stChatInput:hover {
+        border-color: #1d4ed8 !important;
+        box-shadow: 0 6px 24px rgba(37, 99, 235, 0.28), 0 0 0 2px rgba(37, 99, 235, 0.35) !important;
+    }
+
+    div[data-testid="stChatInput"]:focus-within,
+    .stChatInput:focus-within {
+        border-color: #1d4ed8 !important;
+        box-shadow: 0 8px 30px rgba(37, 99, 235, 0.35), 0 0 0 3.5px rgba(37, 99, 235, 0.32) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    div[data-testid="stChatInput"] textarea,
+    .stChatInput textarea {
+        font-size: 0.96rem !important;
+        font-weight: 500 !important;
+        color: #0f172a !important;
+        background: transparent !important;
+        line-height: 1.5 !important;
+    }
+
+    div[data-testid="stChatInput"] textarea::placeholder,
+    .stChatInput textarea::placeholder {
+        color: #64748b !important;
+        font-weight: 500 !important;
+        font-size: 0.92rem !important;
+    }
+
+    div[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"],
+    .stChatInput button[data-testid="stChatInputSubmitButton"] {
+        background: #2563eb !important;
+        border-radius: 10px !important;
+        color: #ffffff !important;
+        transition: all 0.2s ease !important;
+        padding: 6px !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
+    }
+
+    div[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"]:hover:not(:disabled),
+    .stChatInput button[data-testid="stChatInputSubmitButton"]:hover:not(:disabled) {
+        background: #1d4ed8 !important;
+        transform: scale(1.08) !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5) !important;
+    }
+
+    div[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"] svg,
+    .stChatInput button[data-testid="stChatInputSubmitButton"] svg {
+        fill: #ffffff !important;
+        stroke: #ffffff !important;
+    }
+
+    div[data-testid="stChatInput"]:has(textarea:disabled),
+    .stChatInput:has(textarea:disabled) {
+        border: 2.5px solid #2563eb !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 18px rgba(37, 99, 235, 0.20), 0 0 0 1px rgba(37, 99, 235, 0.25) !important;
+        opacity: 1 !important;
+    }
+
+    /* Dark Mode High-Visibility Support */
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stChatInput"],
+        .stChatInput {
+            border-color: #3b82f6 !important;
+            background-color: #1e293b !important;
+            box-shadow: 0 4px 22px rgba(59, 130, 246, 0.32), 0 0 0 1px rgba(59, 130, 246, 0.35) !important;
+        }
+        div[data-testid="stChatInput"]:focus-within,
+        .stChatInput:focus-within {
+            border-color: #60a5fa !important;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.42), 0 0 0 3.5px rgba(59, 130, 246, 0.35) !important;
+        }
+        div[data-testid="stChatInput"] textarea,
+        .stChatInput textarea {
+            color: #f8fafc !important;
+        }
+        div[data-testid="stChatInput"] textarea::placeholder,
+        .stChatInput textarea::placeholder {
+            color: #94a3b8 !important;
+        }
+        div[data-testid="stChatInput"]:has(textarea:disabled),
+        .stChatInput:has(textarea:disabled) {
+            border-color: #3b82f6 !important;
+            background-color: #1e293b !important;
+            box-shadow: 0 4px 22px rgba(59, 130, 246, 0.32), 0 0 0 1px rgba(59, 130, 246, 0.35) !important;
+            opacity: 1 !important;
+        }
+    }
+
+    [data-theme="dark"] div[data-testid="stChatInput"],
+    .stApp[data-theme="dark"] div[data-testid="stChatInput"] {
+        border-color: #3b82f6 !important;
+        background-color: #1e293b !important;
+        box-shadow: 0 4px 22px rgba(59, 130, 246, 0.32), 0 0 0 1px rgba(59, 130, 246, 0.35) !important;
+    }
+    [data-theme="dark"] div[data-testid="stChatInput"]:focus-within,
+    .stApp[data-theme="dark"] div[data-testid="stChatInput"]:focus-within {
+        border-color: #60a5fa !important;
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.42), 0 0 0 3.5px rgba(59, 130, 246, 0.35) !important;
+    }
+    [data-theme="dark"] div[data-testid="stChatInput"] textarea,
+    .stApp[data-theme="dark"] div[data-testid="stChatInput"] textarea {
+        color: #f8fafc !important;
+    }
+    [data-theme="dark"] div[data-testid="stChatInput"] textarea::placeholder,
+    .stApp[data-theme="dark"] div[data-testid="stChatInput"] textarea::placeholder {
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] div[data-testid="stChatInput"]:has(textarea:disabled),
+    .stApp[data-theme="dark"] div[data-testid="stChatInput"]:has(textarea:disabled) {
+        border-color: #3b82f6 !important;
+        background-color: #1e293b !important;
+        box-shadow: 0 4px 22px rgba(59, 130, 246, 0.32), 0 0 0 1px rgba(59, 130, 246, 0.35) !important;
+        opacity: 1 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -466,9 +624,9 @@ def index_file_data(file_bytes: bytes, filename: str, c_size: int, c_overlap: in
             chunks = chunk_document(doc, chunk_size=c_size, chunk_overlap=c_overlap)
 
             if st.session_state.embedding_service is None:
-                st.session_state.embedding_service = EmbeddingService(settings.embedding_model)
+                st.session_state.embedding_service = get_shared_embedding_service(settings.embedding_model)
             if st.session_state.vector_store is None:
-                st.session_state.vector_store = ChromaVectorStore(settings.chroma_persist_directory)
+                st.session_state.vector_store = get_shared_vector_store(settings.chroma_persist_directory)
 
             retriever = SemanticRetriever(
                 vector_store=st.session_state.vector_store,
@@ -503,6 +661,8 @@ def index_file_data(file_bytes: bytes, filename: str, c_size: int, c_overlap: in
             return True
     except EmptyFileError as e:
         st.error(f"Empty Document: {str(e)}")
+    except FileTooLargeError as e:
+        st.error(f"File Too Large: {str(e)}")
     except UnsupportedFileTypeError as e:
         st.error(f"Unsupported File: {str(e)}")
     except UnreadableFileError as e:
@@ -533,11 +693,28 @@ with st.sidebar:
     st.caption("Upload your own document or select a demo to start.")
 
     st.markdown("#### 1️⃣ Choose Document")
+    st.markdown(
+        f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.82rem; font-weight: 600; color: #334155;">Upload Document</span>
+            <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.70rem; font-weight: 700; padding: 2px 7px; border-radius: 9999px;">
+                Max Limit: {settings.max_file_size_mb} MB
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     uploaded_file = st.file_uploader(
-        "Upload a TXT or PDF file:",
+        f"Upload a TXT or PDF file (Max: {settings.max_file_size_mb} MB):",
         type=["txt", "pdf"],
-        help="Upload any text file or text-based PDF to index into ChromaDB.",
-        label_visibility="visible",
+        help=f"Upload any text file or text-based PDF up to {settings.max_file_size_mb} MB to index into ChromaDB.",
+        label_visibility="collapsed",
+    )
+    st.markdown(
+        f"<div style='font-size: 0.73rem; color: #64748b; margin-top: -6px; margin-bottom: 10px; display: flex; align-items: center; gap: 4px;'>"
+        f"<span>🔒 Max upload limit: <b>{settings.max_file_size_mb} MB</b></span> • <span>Formats: <b>.txt, .pdf</b></span>"
+        f"</div>",
+        unsafe_allow_html=True,
     )
 
     st.markdown("<div style='font-size: 0.82rem; font-weight: 600; color: #475569; margin: 6px 0 3px 0;'>Or select an instant demo:</div>", unsafe_allow_html=True)
@@ -567,8 +744,18 @@ with st.sidebar:
     filename_to_process = None
 
     if uploaded_file is not None:
-        file_bytes_to_process = uploaded_file.getvalue()
-        filename_to_process = uploaded_file.name
+        raw_uploaded_bytes = uploaded_file.getvalue()
+        file_size_mb = len(raw_uploaded_bytes) / (1024 * 1024)
+        if len(raw_uploaded_bytes) > settings.max_file_size_bytes:
+            st.error(
+                f"❌ File '{uploaded_file.name}' ({file_size_mb:.2f} MB) exceeds the maximum allowed limit of "
+                f"{settings.max_file_size_mb} MB. Please upload a smaller file or split it into sections."
+            )
+            file_bytes_to_process = None
+            filename_to_process = None
+        else:
+            file_bytes_to_process = raw_uploaded_bytes
+            filename_to_process = uploaded_file.name
     elif st.session_state.sample_selected is not None:
         file_bytes_to_process = st.session_state.sample_selected
         filename_to_process = st.session_state.sample_filename
@@ -964,24 +1151,24 @@ if st.session_state.pending_chat_prompt:
         st.markdown(active_prompt)
         st.caption(f"🕒 {time_now}")
 
-    # 2. Synthesize answer with native loading spinner
+    # 2. Synthesize answer with real-time streaming
     with st.chat_message("assistant"):
-        with st.spinner("Searching ChromaDB evidence & synthesizing grounded answer..."):
-            qa_engine = st.session_state.qa_engine
-            qa_engine.api_key = api_key_input.strip() if api_key_input else settings.active_api_key
-            qa_engine.base_url = base_url_input.strip() if base_url_input else settings.active_base_url
-            qa_engine.model = model_input.strip() if model_input else settings.active_model
-            qa_engine.distance_threshold = distance_threshold
+        qa_engine = st.session_state.qa_engine
+        qa_engine.api_key = api_key_input.strip() if api_key_input else settings.active_api_key
+        qa_engine.base_url = base_url_input.strip() if base_url_input else settings.active_base_url
+        qa_engine.model = model_input.strip() if model_input else settings.active_model
+        qa_engine.distance_threshold = distance_threshold
 
-            active_doc_id = st.session_state.current_doc_info["document_id"]
-            history_turns = [
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages[:-1]
-                if m.get("content")
-            ]
+        active_doc_id = st.session_state.current_doc_info["document_id"]
+        history_turns = [
+            {"role": m["role"], "content": m["content"]}
+            for m in st.session_state.messages[:-1]
+            if m.get("content")
+        ]
 
-            try:
-                res = qa_engine.answer_question(
+        try:
+            if hasattr(qa_engine, "stream_answer_tokens"):
+                token_stream = qa_engine.stream_answer_tokens(
                     question=active_prompt,
                     document_id=active_doc_id,
                     top_k=top_k,
@@ -989,59 +1176,69 @@ if st.session_state.pending_chat_prompt:
                     use_llm=use_llm,
                     conversation_history=history_turns,
                 )
-            except TypeError as te:
-                if "conversation_history" in str(te):
+                streamed_text = st.write_stream(token_stream)
+                res = getattr(qa_engine, "last_response", None)
+                if res is None:
                     res = qa_engine.answer_question(
                         question=active_prompt,
                         document_id=active_doc_id,
                         top_k=top_k,
                         threshold=distance_threshold,
                         use_llm=use_llm,
+                        conversation_history=history_turns,
                     )
-                else:
-                    raise
-            except Exception as e:
-                from src.qa_engine import QAResponse
-                res = QAResponse(
-                    status="api_error",
-                    is_found=False,
-                    answer=ANSWER_NOT_FOUND_IN_DOCUMENT,
-                    question=active_prompt,
-                    error_message=str(e),
-                )
+            else:
+                with st.spinner("Searching ChromaDB evidence & synthesizing grounded answer..."):
+                    res = qa_engine.answer_question(
+                        question=active_prompt,
+                        document_id=active_doc_id,
+                        top_k=top_k,
+                        threshold=distance_threshold,
+                        use_llm=use_llm,
+                        conversation_history=history_turns,
+                    )
+        except Exception as e:
+            from src.qa_engine import QAResponse
+            res = QAResponse(
+                status="api_error",
+                is_found=False,
+                answer=ANSWER_NOT_FOUND_IN_DOCUMENT,
+                question=active_prompt,
+                error_message=str(e),
+            )
 
-            # Record assistant response
-            asst_msg = {
-                "role": "assistant",
-                "content": res.answer,
-                "timestamp": datetime.now().strftime("%I:%M %p"),
-                "response_data": {
-                    "status": res.status,
-                    "is_found": res.is_found,
-                    "answer": res.answer,
-                    "question": res.question,
-                    "source_filename": res.source_filename,
-                    "page_number": res.page_number,
-                    "chunk_id": res.chunk_id,
-                    "distance": res.distance,
-                    "similarity_score": res.similarity_score,
-                    "supporting_passage": res.supporting_passage,
-                    "error_message": res.error_message,
-                    "citations": res.citations,
-                    "retrieved_passages": [
-                        {
-                            "source_filename": getattr(p, "source_filename", None) or getattr(p.chunk, "source_filename", ""),
-                            "page_number": getattr(p, "page_number", None) or getattr(p.chunk, "page_number", 1),
-                            "chunk_id": getattr(p, "chunk_id", None) or getattr(p.chunk, "chunk_id", 0),
-                            "distance": getattr(p, "distance", 1.0),
-                            "text": getattr(p, "text", None) or getattr(p.chunk, "text", ""),
-                        }
-                        for p in (res.retrieved_passages or [])
-                    ],
-                },
-            }
-            st.session_state.messages.append(asst_msg)
-            save_persisted_conversation(st.session_state.messages)
+        # Record assistant response so it is preserved across reruns
+        asst_msg = {
+            "role": "assistant",
+            "content": res.answer,
+            "timestamp": datetime.now().strftime("%I:%M %p"),
+            "response_data": {
+                "status": res.status,
+                "is_found": res.is_found,
+                "answer": res.answer,
+                "question": res.question,
+                "source_filename": res.source_filename,
+                "page_number": res.page_number,
+                "chunk_id": res.chunk_id,
+                "distance": res.distance,
+                "similarity_score": res.similarity_score,
+                "supporting_passage": res.supporting_passage,
+                "error_message": res.error_message,
+                "citations": res.citations,
+                "retrieved_passages": [
+                    {
+                        "source_filename": getattr(p, "source_filename", None) or getattr(p.chunk, "source_filename", ""),
+                        "page_number": getattr(p, "page_number", None) or getattr(p.chunk, "page_number", 1),
+                        "chunk_id": getattr(p, "chunk_id", None) or getattr(p.chunk, "chunk_id", 0),
+                        "distance": getattr(p, "distance", 1.0),
+                        "text": getattr(p, "text", None) or getattr(p.chunk, "text", ""),
+                    }
+                    for p in (res.retrieved_passages or [])
+                ],
+            },
+        }
+        st.session_state.messages.append(asst_msg)
+        save_persisted_conversation(st.session_state.messages)
 
     st.rerun()
 
@@ -1054,10 +1251,10 @@ doc_is_ready = (st.session_state.qa_engine is not None and st.session_state.curr
 if doc_is_ready:
     active_filename = st.session_state.current_doc_info["filename"]
     input_placeholder = f"Ask a question about {active_filename} (e.g. When was the company founded?)..."
-    is_disabled = st.session_state.is_processing
 else:
     input_placeholder = "Upload and index a document in the sidebar to start asking questions..."
-    is_disabled = True
+
+is_disabled = st.session_state.is_processing
 
 user_query = st.chat_input(
     placeholder=input_placeholder,
@@ -1066,7 +1263,7 @@ user_query = st.chat_input(
 
 if user_query and user_query.strip():
     if not doc_is_ready:
-        st.warning("Please upload and index a document first to enable question answering.")
+        st.warning("⚠️ Please select or upload a document in the sidebar first to enable question answering.")
     else:
         st.session_state.pending_chat_prompt = user_query.strip()
         st.rerun()

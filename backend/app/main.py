@@ -14,6 +14,7 @@ from backend.app.services.state_manager import state_manager
 from backend.app.services.exceptions import (
     UnsupportedFileTypeError,
     EmptyFileError,
+    FileTooLargeError,
     UnreadableDocumentError,
     NoExtractableTextError,
 )
@@ -91,6 +92,8 @@ async def index_document(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except EmptyFileError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except FileTooLargeError as e:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=str(e))
     except UnreadableDocumentError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except NoExtractableTextError as e:

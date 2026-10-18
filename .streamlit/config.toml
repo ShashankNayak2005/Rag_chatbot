@@ -8,3 +8,8 @@ font = "sans serif"
 
 [client]
 toolbarMode = "minimal"
+
+[server]
+maxUploadSize = 200
+
+

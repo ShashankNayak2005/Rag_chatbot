@@ -13,6 +13,11 @@ class EmptyFileError(DocumentProcessingError):
     pass
 
 
+class FileTooLargeError(DocumentProcessingError):
+    """Raised when the uploaded file exceeds the maximum allowed size limit."""
+    pass
+
+
 class UnreadableDocumentError(DocumentProcessingError):
     """Raised when the document cannot be parsed or opened."""
     pass

@@ -9,6 +9,7 @@ from src.document_loader import (
     DocumentValidationError,
     UnsupportedFileTypeError,
     EmptyFileError,
+    FileTooLargeError,
     UnreadableFileError,
     NoExtractableTextError,
 )
@@ -49,6 +50,7 @@ __all__ = [
     "DocumentValidationError",
     "UnsupportedFileTypeError",
     "EmptyFileError",
+    "FileTooLargeError",
     "UnreadableFileError",
     "NoExtractableTextError",
     "TextChunker",

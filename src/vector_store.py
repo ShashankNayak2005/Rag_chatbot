@@ -35,6 +35,9 @@ class VectorSearchResult:
         return max(0.0, round(1.0 - self.distance, 4))
 
 
+_CHROMA_CLIENT_CACHE: Dict[str, Any] = {}
+
+
 class ChromaVectorStore:
     """Manages persistent ChromaDB vector storage and document-isolated semantic queries."""
 
@@ -47,9 +50,10 @@ class ChromaVectorStore:
         self.collection_name = collection_name
         self._client = None
         self._collection = None
+        self._indexed_docs_cache = set()
 
     def _get_client_and_collection(self):
-        """Lazy loader for persistent ChromaDB client and collection."""
+        """Lazy loader for persistent ChromaDB client and collection with process-level caching."""
         if self._collection is not None:
             return self._client, self._collection
 
@@ -64,12 +68,16 @@ class ChromaVectorStore:
 
         try:
             # Ensure storage directory exists
-            Path(self.persist_directory).mkdir(parents=True, exist_ok=True)
+            abs_path = str(Path(self.persist_directory).resolve())
+            Path(abs_path).mkdir(parents=True, exist_ok=True)
 
-            self._client = chromadb.PersistentClient(
-                path=self.persist_directory,
-                settings=ChromaSettings(anonymized_telemetry=False),
-            )
+            if abs_path not in _CHROMA_CLIENT_CACHE:
+                _CHROMA_CLIENT_CACHE[abs_path] = chromadb.PersistentClient(
+                    path=abs_path,
+                    settings=ChromaSettings(anonymized_telemetry=False),
+                )
+
+            self._client = _CHROMA_CLIENT_CACHE[abs_path]
 
             # Collection configured with cosine distance space:
             # smaller distance = closer / more similar.
@@ -85,10 +93,15 @@ class ChromaVectorStore:
         """Check if chunks for this document_id already exist in ChromaDB."""
         if not document_id:
             return False
+        if document_id in self._indexed_docs_cache:
+            return True
         _, collection = self._get_client_and_collection()
         try:
             existing = collection.get(where={"document_id": document_id}, limit=1)
-            return bool(existing and existing.get("ids"))
+            is_indexed = bool(existing and existing.get("ids"))
+            if is_indexed:
+                self._indexed_docs_cache.add(document_id)
+            return is_indexed
         except Exception:
             return False
 
@@ -96,6 +109,7 @@ class ChromaVectorStore:
         """Remove all passages associated with a specific document_id."""
         if not document_id:
             return
+        self._indexed_docs_cache.discard(document_id)
         _, collection = self._get_client_and_collection()
         try:
             collection.delete(where={"document_id": document_id})
@@ -118,6 +132,7 @@ class ChromaVectorStore:
         if len(chunks) != len(embeddings):
             raise ValueError(f"Mismatch: {len(chunks)} chunks but {len(embeddings)} embeddings provided.")
 
+        self._indexed_docs_cache.add(document_id)
         _, collection = self._get_client_and_collection()
 
         # If replacing, clear existing chunks for this document

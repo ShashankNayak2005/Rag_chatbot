@@ -25,6 +25,11 @@ class EmptyFileError(DocumentValidationError):
     pass
 
 
+class FileTooLargeError(DocumentValidationError):
+    """Raised when the provided file exceeds the maximum allowed size limit."""
+    pass
+
+
 class UnreadableFileError(DocumentValidationError):
     """Raised when a PDF or text file cannot be parsed or decoded."""
     pass
@@ -93,9 +98,13 @@ def _read_bytes_and_filename(
     raise TypeError(f"Unsupported document source type: {type(source)}")
 
 
-def validate_file_metadata(filename: str, file_bytes: bytes) -> str:
+def validate_file_metadata(
+    filename: str,
+    file_bytes: bytes,
+    max_bytes: Optional[int] = None,
+) -> str:
     """
-    Validate file extension and ensure non-zero byte size.
+    Validate file extension, ensure non-zero byte size, and check max file size limit.
     Returns normalized extension (e.g. '.txt', '.pdf').
     """
     if not filename:
@@ -111,6 +120,13 @@ def validate_file_metadata(filename: str, file_bytes: bytes) -> str:
 
     if len(file_bytes) == 0:
         raise EmptyFileError(f"The document '{filename}' is empty (0 bytes).")
+
+    if max_bytes is not None and len(file_bytes) > max_bytes:
+        size_mb = len(file_bytes) / (1024 * 1024)
+        limit_mb = max_bytes / (1024 * 1024)
+        raise FileTooLargeError(
+            f"The document '{filename}' is {size_mb:.2f} MB, which exceeds the maximum allowed limit of {limit_mb:.2f} MB."
+        )
 
     return ext
 
@@ -180,6 +196,7 @@ def extract_from_pdf(filename: str, file_bytes: bytes) -> ExtractedDocument:
 def load_document(
     source: Union[str, Path, bytes, BinaryIO],
     filename: Optional[str] = None,
+    max_bytes: Optional[int] = None,
 ) -> ExtractedDocument:
     """
     Main entrypoint to validate and extract text from a TXT or PDF document.
@@ -190,9 +207,13 @@ def load_document(
         - binary file stream (e.g., Streamlit UploadedFile)
     """
     import hashlib
+    from src.config import get_settings
+
+    if max_bytes is None:
+        max_bytes = get_settings().max_file_size_bytes
 
     file_bytes, fname = _read_bytes_and_filename(source, filename)
-    ext = validate_file_metadata(fname, file_bytes)
+    ext = validate_file_metadata(fname, file_bytes, max_bytes=max_bytes)
 
     if ext == ".txt":
         doc = extract_from_txt(fname, file_bytes)

@@ -68,3 +68,10 @@ def test_extract_scanned_image_only_pdf(image_only_pdf_bytes: bytes):
 def test_extract_corrupted_pdf(corrupt_pdf_bytes: bytes):
     with pytest.raises(UnreadableDocumentError):
         extract_document("bad.pdf", corrupt_pdf_bytes)
+
+
+def test_validate_file_metadata_file_too_large():
+    from backend.app.services.exceptions import FileTooLargeError
+    with pytest.raises(FileTooLargeError, match="exceeds the maximum limit"):
+        validate_file_metadata("large.txt", b"A" * 105, max_bytes=100)
+

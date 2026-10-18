@@ -219,6 +219,7 @@ class QAEngine:
             else max(0.0, 1.0 - self.distance_threshold)
         )
         self._client = openai_client
+        self.last_response: Optional[QAResponse] = None
 
     def _get_client(self) -> Any:
         if self._client is not None:
@@ -658,3 +659,245 @@ class QAEngine:
                 citations=citations,
                 retrieved_passages=passages,
             )
+
+    def stream_answer_tokens(
+        self,
+        question: str,
+        document_id: Optional[str] = None,
+        top_k: int = 4,
+        threshold: Optional[float] = None,
+        use_llm: bool = True,
+        use_deepseek: Optional[bool] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+    ):
+        """
+        Stream tokens in real-time from Groq LLM API while grounding in document passages.
+        Yields text token chunks as they arrive from the inference engine.
+        Stores the completed QAResponse on `self.last_response` with citations and provenance.
+        """
+        if use_deepseek is not None:
+            use_llm = use_deepseek
+        if not question or not question.strip():
+            raise ValueError("Question cannot be blank or contain only whitespace.")
+
+        clean_question = question.strip()
+        dist_threshold = threshold if threshold is not None else self.distance_threshold
+
+        # Step 1: Retrieval
+        passages: List[Union[RetrievedPassage, RankedPassage]] = []
+        if isinstance(self.retriever, SemanticRetriever):
+            doc_id = document_id or self.retriever.vector_store.get_active_document_id()
+            if not doc_id:
+                self.last_response = QAResponse(
+                    question=clean_question,
+                    answer=ANSWER_NOT_FOUND_IN_DOCUMENT,
+                    is_found=False,
+                    status="not_found",
+                    error_message="No indexed document found to query.",
+                )
+                yield ANSWER_NOT_FOUND_IN_DOCUMENT
+                return
+
+            is_broad_query = bool(re.search(
+                r"\b(?:summar\w*|overview\w*|about the document|what is this (?:document|file|report|text)|main idea|takeaway\w*|gist|brief\w*|synthes\w*)",
+                clean_question.lower()
+            ))
+            effective_dist = max(dist_threshold, 0.98) if is_broad_query else dist_threshold
+
+            passages = self.retriever.retrieve(
+                document_id=doc_id,
+                query=clean_question,
+                top_k=top_k,
+                max_distance=effective_dist,
+            )
+            if not passages:
+                candidate_passages = self.retriever.retrieve(
+                    document_id=doc_id,
+                    query=clean_question,
+                    top_k=top_k,
+                    max_distance=0.98,
+                )
+                if candidate_passages and (is_broad_query or validate_evidence(clean_question, candidate_passages)):
+                    passages = candidate_passages
+        elif isinstance(self.retriever, TFIDFRetriever):
+            passages = self.retriever.retrieve(clean_question, top_k=top_k)
+        elif self.retriever is not None and hasattr(self.retriever, "retrieve"):
+            try:
+                passages = self.retriever.retrieve(
+                    document_id=document_id,
+                    query=clean_question,
+                    top_k=top_k,
+                )
+            except TypeError:
+                passages = self.retriever.retrieve(clean_question)
+
+        # Step 2: Empty check
+        if not passages:
+            self.last_response = QAResponse(
+                question=clean_question,
+                answer=ANSWER_NOT_FOUND_IN_DOCUMENT,
+                is_found=False,
+                status="not_found",
+            )
+            yield ANSWER_NOT_FOUND_IN_DOCUMENT
+            return
+
+        # Step 3: Evidence validation check
+        best = passages[0]
+        best_dist = best.distance if hasattr(best, "distance") else 1.0 - best.similarity_score
+        best_sim = best.similarity_score
+        best_text = best.text if hasattr(best, "text") else best.chunk.text
+        best_file = best.source_filename if hasattr(best, "source_filename") else best.chunk.source_filename
+        best_page = best.page_number if hasattr(best, "page_number") else best.chunk.page_number
+        best_chunk_id = best.chunk_id if hasattr(best, "chunk_id") else best.chunk.chunk_id
+
+        if not validate_evidence(clean_question, passages):
+            self.last_response = QAResponse(
+                question=clean_question,
+                answer=ANSWER_NOT_FOUND_IN_DOCUMENT,
+                source_filename=None,
+                page_number=None,
+                chunk_id=None,
+                supporting_passage=None,
+                similarity_score=best_sim,
+                distance=best_dist,
+                is_found=False,
+                status="not_found",
+                citations=[],
+                retrieved_passages=passages,
+            )
+            yield ANSWER_NOT_FOUND_IN_DOCUMENT
+            return
+
+        citations = []
+        for p in passages:
+            if hasattr(p, "source_filename"):
+                citations.append({
+                    "source_filename": p.source_filename,
+                    "page_number": p.page_number,
+                    "chunk_id": p.chunk_id,
+                    "distance": p.distance,
+                    "similarity_score": p.similarity_score,
+                    "text": p.text,
+                })
+            else:
+                citations.append({
+                    "source_filename": p.chunk.source_filename,
+                    "page_number": p.chunk.page_number,
+                    "chunk_id": p.chunk.chunk_id,
+                    "distance": 1.0 - p.similarity_score,
+                    "similarity_score": p.similarity_score,
+                    "text": p.chunk.text,
+                })
+
+        # Step 4: Fallback if offline or use_llm=False
+        if not use_llm or (isinstance(self.retriever, TFIDFRetriever) and self._client is None):
+            extractive_answer = self._extract_salient_answer(best_text, clean_question)
+            clean_ans = strip_source_citation_text(extractive_answer)
+            self.last_response = QAResponse(
+                question=clean_question,
+                answer=clean_ans,
+                source_filename=best_file,
+                page_number=best_page,
+                chunk_id=best_chunk_id,
+                supporting_passage=best_text,
+                similarity_score=best_sim,
+                distance=best_dist,
+                is_found=True,
+                status="success",
+                citations=citations,
+                retrieved_passages=passages,
+            )
+            yield clean_ans
+            return
+
+        # Step 5: Groq streaming API call
+        try:
+            client = self._get_client()
+            messages = self._build_messages(
+                clean_question, passages, conversation_history=conversation_history
+            )
+            stream = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.0,
+                max_tokens=500,
+                stream=True,
+            )
+            accumulated_chunks = []
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    token = chunk.choices[0].delta.content
+                    accumulated_chunks.append(token)
+                    yield token
+
+            full_answer = "".join(accumulated_chunks).strip()
+
+            refusal_patterns = [
+                ANSWER_NOT_FOUND_IN_DOCUMENT,
+                "not found in the document",
+                "not mentioned in the document",
+                "does not contain",
+                "does not mention",
+                "does not state",
+                "not provided in the document",
+                "no information in the document",
+                "not found in the provided",
+                "not mentioned in the provided",
+                "cannot answer based on",
+                "cannot be answered based on",
+                "insufficient information",
+                "is not stated",
+                "is not available in the document",
+                "the document does not provide",
+                "the excerpts do not provide",
+                "the provided text does not contain",
+            ]
+            raw_lower = full_answer.lower()
+            if (
+                ANSWER_NOT_FOUND_IN_DOCUMENT in full_answer
+                or full_answer.strip().upper().startswith("ANSWER_NOT_FOUND")
+                or any(pat in raw_lower for pat in refusal_patterns)
+            ):
+                self.last_response = QAResponse(
+                    question=clean_question,
+                    answer=ANSWER_NOT_FOUND_IN_DOCUMENT,
+                    source_filename=None,
+                    page_number=None,
+                    chunk_id=None,
+                    supporting_passage=None,
+                    similarity_score=best_sim,
+                    distance=best_dist,
+                    is_found=False,
+                    status="not_found",
+                    citations=[],
+                    retrieved_passages=passages,
+                )
+            else:
+                self.last_response = QAResponse(
+                    question=clean_question,
+                    answer=strip_source_citation_text(full_answer),
+                    source_filename=best_file,
+                    page_number=best_page,
+                    chunk_id=best_chunk_id,
+                    supporting_passage=best_text,
+                    similarity_score=best_sim,
+                    distance=best_dist,
+                    is_found=True,
+                    status="success",
+                    citations=citations,
+                    retrieved_passages=passages,
+                )
+        except Exception:
+            # Fallback to standard synchronous answer_question if streaming fails
+            res = self.answer_question(
+                question=clean_question,
+                document_id=document_id,
+                top_k=top_k,
+                threshold=threshold,
+                use_llm=use_llm,
+                conversation_history=conversation_history,
+            )
+            self.last_response = res
+            yield res.answer
+

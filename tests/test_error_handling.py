@@ -13,6 +13,7 @@ from openai import AuthenticationError, RateLimitError, APITimeoutError, APIConn
 from src.document_loader import (
     load_document,
     EmptyFileError,
+    FileTooLargeError,
     UnsupportedFileTypeError,
     UnreadableFileError,
     NoExtractableTextError,
@@ -139,3 +140,9 @@ def test_api_timeout_error():
 
     assert res.status == "api_error"
     assert "Timed Out" in (res.error_message or "")
+
+
+def test_oversized_file_rejected():
+    with pytest.raises(FileTooLargeError, match="exceeds the maximum allowed limit"):
+        load_document(b"A" * 105, filename="too_big.txt", max_bytes=100)
+

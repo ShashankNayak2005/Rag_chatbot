@@ -25,6 +25,22 @@ def test_upload_empty_file(client: TestClient):
     assert "is empty" in response.json()["detail"]
 
 
+def test_upload_oversized_file(client: TestClient, monkeypatch):
+    from backend.app.services.exceptions import FileTooLargeError
+    import backend.app.main as main_mod
+
+    def mock_extract(*args, **kwargs):
+        raise FileTooLargeError("The file 'big.txt' is 205.00 MB, which exceeds the maximum limit of 200.00 MB.")
+
+    monkeypatch.setattr(main_mod, "extract_document", mock_extract)
+    files = {"file": ("big.txt", b"dummy content", "text/plain")}
+    response = client.post("/api/v1/documents/index", files=files)
+    assert response.status_code == 413
+    assert "exceeds the maximum limit" in response.json()["detail"]
+
+
+
+
 def test_upload_corrupt_pdf(client: TestClient, corrupt_pdf_bytes: bytes):
     files = {"file": ("bad.pdf", corrupt_pdf_bytes, "application/pdf")}
     response = client.post("/api/v1/documents/index", files=files)

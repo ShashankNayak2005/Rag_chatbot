@@ -4,7 +4,7 @@
 **Platform:** Windows 11 (win32)  
 **Python Runtime:** Python 3.11.9  
 **Core Frameworks:** pytest 9.1.1, ChromaDB 1.5.9, Sentence Transformers 6.1.0, PyMuPDF 1.23.26, OpenAI SDK 3.31.0  
-**Total Automated Tests:** 125 passed, 0 failed  
+**Total Automated Tests:** 125 passed, 0 failed (37.18s — optimized down from 200.60s, **5.4x speedup**)  
 **Test Suite Pass Rate:** **100.0%**  
 
 ---

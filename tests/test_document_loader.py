@@ -96,3 +96,40 @@ def test_load_corrupt_pdf():
     bad_pdf = b"%PDF-1.5 corrupt data"
     with pytest.raises(UnreadableFileError, match="Failed to open/parse PDF"):
         load_document(bad_pdf, filename="bad.pdf")
+
+
+def test_validate_metadata_file_too_large():
+    from src.document_loader import FileTooLargeError
+    # Test with custom max_bytes of 100 bytes
+    payload = b"X" * 101
+    with pytest.raises(FileTooLargeError, match="exceeds the maximum allowed limit"):
+        validate_file_metadata("large.txt", payload, max_bytes=100)
+
+
+def test_load_document_file_too_large_txt():
+    from src.document_loader import FileTooLargeError
+    # Custom max_bytes parameter
+    payload = b"X" * 105
+    with pytest.raises(FileTooLargeError, match="exceeds the maximum allowed limit"):
+        load_document(payload, filename="toolarge.txt", max_bytes=100)
+
+
+def test_load_document_file_within_limit():
+    payload = b"Valid content within limits."
+    doc = load_document(payload, filename="ok.txt", max_bytes=1000)
+    assert doc.filename == "ok.txt"
+    assert doc.total_characters == len("Valid content within limits.")
+
+
+def test_load_document_file_too_large_pdf():
+    from src.document_loader import FileTooLargeError
+    pdf = fitz.open()
+    p = pdf.new_page()
+    p.insert_text((50, 50), "Sample PDF.")
+    pdf_bytes = pdf.tobytes()
+    pdf.close()
+
+    # If max_bytes is smaller than PDF bytes
+    with pytest.raises(FileTooLargeError):
+        load_document(pdf_bytes, filename="test.pdf", max_bytes=len(pdf_bytes) - 1)
+
