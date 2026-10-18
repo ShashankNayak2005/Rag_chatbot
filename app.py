@@ -157,7 +157,7 @@ if st.session_state.qa_engine is not None:
     except Exception:
         pass
 
-# Clean, professional styling: subtle borders, light surfaces, refined chat spacing
+# Clean, professional styling: light theme default with full adaptive dark theme visibility
 st.markdown(
     """
     <style>
@@ -188,19 +188,63 @@ st.markdown(
         transition: all 0.15s ease-in-out;
     }
 
-    /* User messages: light gray background, subtle border, right alignment feel */
+    /* User messages: light theme default */
     div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
+        color: #0f172a;
         margin-left: 10%;
     }
 
-    /* Assistant messages: clean crisp white, subtle border */
+    /* Assistant messages: light theme default */
     div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
+        color: #0f172a;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         margin-right: 5%;
+    }
+
+    /* Dark Theme chat bubbles - via prefers-color-scheme and data-theme="dark" */
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        div[data-testid="stChatMessage"] p,
+        div[data-testid="stChatMessage"] span,
+        div[data-testid="stChatMessage"] li {
+            color: #f8fafc !important;
+        }
+    }
+
+    [data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]),
+    .stApp[data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]),
+    .stApp[data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] div[data-testid="stChatMessage"] p,
+    .stApp[data-theme="dark"] div[data-testid="stChatMessage"] p,
+    [data-theme="dark"] div[data-testid="stChatMessage"] span,
+    .stApp[data-theme="dark"] div[data-testid="stChatMessage"] span,
+    [data-theme="dark"] div[data-testid="stChatMessage"] li,
+    .stApp[data-theme="dark"] div[data-testid="stChatMessage"] li {
+        color: #f8fafc !important;
     }
 
     /* Compact citation metadata tags */
@@ -229,6 +273,249 @@ st.markdown(
         color: #047857;
         border-color: #a7f3d0;
     }
+    .cite-time {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 400;
+        margin-left: 6px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .cite-pill {
+            background: #1e293b !important;
+            color: #cbd5e1 !important;
+            border-color: #334155 !important;
+        }
+        .cite-pill-sim {
+            background: rgba(16, 185, 129, 0.2) !important;
+            color: #34d399 !important;
+            border-color: rgba(52, 211, 153, 0.4) !important;
+        }
+        .cite-time {
+            color: #94a3b8 !important;
+        }
+    }
+
+    [data-theme="dark"] .cite-pill,
+    .stApp[data-theme="dark"] .cite-pill {
+        background: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] .cite-pill-sim,
+    .stApp[data-theme="dark"] .cite-pill-sim {
+        background: rgba(16, 185, 129, 0.2) !important;
+        color: #34d399 !important;
+        border-color: rgba(52, 211, 153, 0.4) !important;
+    }
+    [data-theme="dark"] .cite-time,
+    .stApp[data-theme="dark"] .cite-time {
+        color: #94a3b8 !important;
+    }
+
+    /* App Header Typography & Badges */
+    .app-title {
+        margin: 0;
+        font-weight: 800;
+        font-size: 1.55rem;
+        color: #0f172a;
+        letter-spacing: -0.3px;
+    }
+    .app-badge {
+        font-size: 0.74rem;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: #475569;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        border: 1px solid #e2e8f0;
+    }
+    .app-subtitle {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.88rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .app-title { color: #f8fafc !important; }
+        .app-badge { background: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+        .app-subtitle { color: #94a3b8 !important; }
+    }
+    [data-theme="dark"] .app-title, .stApp[data-theme="dark"] .app-title { color: #f8fafc !important; }
+    [data-theme="dark"] .app-badge, .stApp[data-theme="dark"] .app-badge { background: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+    [data-theme="dark"] .app-subtitle, .stApp[data-theme="dark"] .app-subtitle { color: #94a3b8 !important; }
+
+    /* Welcome Box & Empty State */
+    .welcome-box {
+        padding: 12px 18px;
+        border-radius: 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        margin: 6px 0 14px 0;
+    }
+    .welcome-title {
+        font-weight: 700;
+        font-size: 0.96rem;
+        color: #0f172a;
+    }
+    .welcome-desc {
+        color: #64748b;
+        font-size: 0.82rem;
+        margin: 4px 0 0 0;
+        line-height: 1.45;
+    }
+    .empty-picker-box {
+        background: #f8fafc;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 16px 20px;
+        text-align: center;
+        margin-top: 6px;
+    }
+    .empty-picker-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+    .empty-picker-desc {
+        font-size: 0.84rem;
+        color: #64748b;
+        margin: 0 0 12px 0;
+    }
+    .section-helper-text {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .welcome-box { background: #1e293b !important; border-color: #334155 !important; }
+        .welcome-title { color: #f8fafc !important; }
+        .welcome-desc { color: #cbd5e1 !important; }
+        .empty-picker-box { background: #1e293b !important; border-color: #475569 !important; }
+        .empty-picker-title { color: #f8fafc !important; }
+        .empty-picker-desc { color: #cbd5e1 !important; }
+        .section-helper-text { color: #cbd5e1 !important; }
+    }
+    [data-theme="dark"] .welcome-box, .stApp[data-theme="dark"] .welcome-box { background: #1e293b !important; border-color: #334155 !important; }
+    [data-theme="dark"] .welcome-title, .stApp[data-theme="dark"] .welcome-title { color: #f8fafc !important; }
+    [data-theme="dark"] .welcome-desc, .stApp[data-theme="dark"] .welcome-desc { color: #cbd5e1 !important; }
+    [data-theme="dark"] .empty-picker-box, .stApp[data-theme="dark"] .empty-picker-box { background: #1e293b !important; border-color: #475569 !important; }
+    [data-theme="dark"] .empty-picker-title, .stApp[data-theme="dark"] .empty-picker-title { color: #f8fafc !important; }
+    [data-theme="dark"] .empty-picker-desc, .stApp[data-theme="dark"] .empty-picker-desc { color: #cbd5e1 !important; }
+    [data-theme="dark"] .section-helper-text, .stApp[data-theme="dark"] .section-helper-text { color: #cbd5e1 !important; }
+
+    /* Active Document Cards (Sidebar & Header) */
+    .card-doc-active {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 10px 0 8px 0;
+    }
+    .card-doc-active .active-badge {
+        font-size: 0.70rem;
+        font-weight: 700;
+        color: #166534;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .card-doc-active .active-filename {
+        font-weight: 700;
+        font-size: 0.88rem;
+        color: #14532d;
+        word-break: break-all;
+        margin: 3px 0 5px 0;
+    }
+    .card-doc-active .active-meta {
+        font-size: 0.74rem;
+        color: #166534;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .card-doc-active {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
+        }
+        .card-doc-active .active-badge { color: #34d399 !important; }
+        .card-doc-active .active-filename { color: #f0fdf4 !important; }
+        .card-doc-active .active-meta { color: #a7f3d0 !important; }
+    }
+    [data-theme="dark"] .card-doc-active, .stApp[data-theme="dark"] .card-doc-active {
+        background: rgba(16, 185, 129, 0.15) !important;
+        border-color: rgba(16, 185, 129, 0.4) !important;
+    }
+    [data-theme="dark"] .card-doc-active .active-badge, .stApp[data-theme="dark"] .card-doc-active .active-badge { color: #34d399 !important; }
+    [data-theme="dark"] .card-doc-active .active-filename, .stApp[data-theme="dark"] .card-doc-active .active-filename { color: #f0fdf4 !important; }
+    [data-theme="dark"] .card-doc-active .active-meta, .stApp[data-theme="dark"] .card-doc-active .active-meta { color: #a7f3d0 !important; }
+
+    /* Staged Document Card (Sidebar) */
+    .card-doc-staged {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 12px 0 8px 0;
+    }
+    .card-doc-staged .staged-badge {
+        font-size: 0.70rem;
+        font-weight: 700;
+        color: #1d4ed8;
+        text-transform: uppercase;
+    }
+    .card-doc-staged .staged-filename {
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #1e40af;
+        word-break: break-all;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .card-doc-staged {
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-color: rgba(59, 130, 246, 0.4) !important;
+        }
+        .card-doc-staged .staged-badge { color: #60a5fa !important; }
+        .card-doc-staged .staged-filename { color: #eff6ff !important; }
+    }
+    [data-theme="dark"] .card-doc-staged, .stApp[data-theme="dark"] .card-doc-staged {
+        background: rgba(59, 130, 246, 0.15) !important;
+        border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+    [data-theme="dark"] .card-doc-staged .staged-badge, .stApp[data-theme="dark"] .card-doc-staged .staged-badge { color: #60a5fa !important; }
+    [data-theme="dark"] .card-doc-staged .staged-filename, .stApp[data-theme="dark"] .card-doc-staged .staged-filename { color: #eff6ff !important; }
+
+    /* No Document Card (Header) */
+    .card-doc-none {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: right;
+    }
+    .card-doc-none .none-badge {
+        font-size: 0.70rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .card-doc-none .none-sub {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .card-doc-none { background: #1e293b !important; border-color: #334155 !important; }
+        .card-doc-none .none-badge { color: #94a3b8 !important; }
+        .card-doc-none .none-sub { color: #cbd5e1 !important; }
+    }
+    [data-theme="dark"] .card-doc-none, .stApp[data-theme="dark"] .card-doc-none { background: #1e293b !important; border-color: #334155 !important; }
+    [data-theme="dark"] .card-doc-none .none-badge, .stApp[data-theme="dark"] .card-doc-none .none-badge { color: #94a3b8 !important; }
+    [data-theme="dark"] .card-doc-none .none-sub, .stApp[data-theme="dark"] .card-doc-none .none-sub { color: #cbd5e1 !important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -317,7 +604,7 @@ with st.sidebar:
         label_visibility="visible",
     )
 
-    st.markdown("<div style='font-size: 0.82rem; font-weight: 600; color: #475569; margin: 6px 0 3px 0;'>Or select an instant demo:</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-helper-text' style='margin: 6px 0 3px 0;'>Or select an instant demo:</div>", unsafe_allow_html=True)
     col_sb1, col_sb2 = st.columns(2)
     with col_sb1:
         if st.button("🏢 Datavex", use_container_width=True, help="Load Datavex corporate profile"):
@@ -358,9 +645,9 @@ with st.sidebar:
     if is_new_staged:
         st.markdown(
             f"""
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 12px; margin: 12px 0 8px 0;">
-                <div style="font-size: 0.70rem; font-weight: 700; color: #1d4ed8; text-transform: uppercase;">Ready to Index</div>
-                <div style="font-size: 0.86rem; font-weight: 600; color: #1e40af; word-break: break-all;">
+            <div class="card-doc-staged">
+                <div class="staged-badge">Ready to Index</div>
+                <div class="staged-filename">
                     📄 {html.escape(filename_to_process)}
                 </div>
             </div>
@@ -391,12 +678,12 @@ with st.sidebar:
         info = st.session_state.current_doc_info
         st.markdown(
             f"""
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin: 12px 0 8px 0;">
-                <div style="font-size: 0.70rem; font-weight: 700; color: #166534; text-transform: uppercase;">✅ Active Indexed Document</div>
-                <div style="font-weight: 700; font-size: 0.90rem; color: #14532d; word-break: break-all; margin: 4px 0 6px 0;">
+            <div class="card-doc-active">
+                <div class="active-badge">✅ Active Indexed Document</div>
+                <div class="active-filename">
                     📑 {html.escape(info['filename'])}
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.76rem; color: #166534;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;" class="active-meta">
                     <div><b>Format:</b> {info['file_type']}</div>
                     <div><b>Pages:</b> {info['pages']}</div>
                     <div><b>Chunks:</b> {info['chunks']}</div>
@@ -540,10 +827,10 @@ with head_col1:
     st.markdown(
         """
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
-            <h2 style="margin: 0; font-weight: 800; font-size: 1.55rem; color: #0f172a; letter-spacing: -0.3px;">📄 Document Q&A</h2>
-            <span style="font-size: 0.74rem; font-weight: 600; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 9999px; border: 1px solid #e2e8f0;">RAG Assistant</span>
+            <h2 class="app-title">📄 Document Q&A</h2>
+            <span class="app-badge">RAG Assistant</span>
         </div>
-        <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
+        <p class="app-subtitle">
             Answers grounded strictly in document evidence with exact citations and zero hallucinations.
         </p>
         """,
@@ -555,12 +842,12 @@ with head_col2:
         info = st.session_state.current_doc_info
         st.markdown(
             f"""
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; text-align: right;">
-                <div style="font-size: 0.70rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">🟢 Active Document</div>
-                <div style="font-size: 0.86rem; font-weight: 700; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <div class="card-doc-active" style="text-align: right; margin: 0; padding: 8px 12px;">
+                <div class="active-badge">🟢 Active Document</div>
+                <div class="active-filename" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 2px 0;">
                     {html.escape(info['filename'])}
                 </div>
-                <div style="font-size: 0.72rem; color: #16a34a;">{info['chunks']} chunks indexed</div>
+                <div class="active-meta">{info['chunks']} chunks indexed</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -568,9 +855,9 @@ with head_col2:
     else:
         st.markdown(
             """
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; text-align: right;">
-                <div style="font-size: 0.70rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">⚪ No Document</div>
-                <div style="font-size: 0.82rem; font-weight: 600; color: #475569;">Upload file in sidebar</div>
+            <div class="card-doc-none">
+                <div class="none-badge">⚪ No Document</div>
+                <div class="none-sub">Upload file in sidebar</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -583,12 +870,12 @@ st.divider()
 if not st.session_state.messages and not st.session_state.pending_chat_prompt:
     st.markdown(
         """
-        <div style="padding: 12px 18px; border-radius: 10px; background: #ffffff; border: 1px solid #e2e8f0; margin: 6px 0 14px 0;">
+        <div class="welcome-box">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 1.25rem;">🤖</span>
-                <span style="font-weight: 700; font-size: 0.96rem; color: #0f172a;">Welcome to Document Q&A</span>
+                <span class="welcome-title">Welcome to Document Q&A</span>
             </div>
-            <p style="color: #64748b; font-size: 0.82rem; margin: 4px 0 0 0; line-height: 1.45;">
+            <p class="welcome-desc">
                 Ask questions about your uploaded document. Answers are strictly grounded in vector passages with zero hallucination.
             </p>
         </div>
@@ -597,7 +884,7 @@ if not st.session_state.messages and not st.session_state.pending_chat_prompt:
     )
 
     if st.session_state.current_doc_info:
-        st.markdown("<p style='font-size: 0.84rem; font-weight: 600; color: #475569; margin-bottom: 6px;'>💡 Try asking an example question:</p>", unsafe_allow_html=True)
+        st.markdown("<p class='section-helper-text'>💡 Try asking an example question:</p>", unsafe_allow_html=True)
         col_q1, col_q2 = st.columns(2)
         with col_q1:
             if st.button("🏢 When was the company founded?", use_container_width=True):
@@ -616,9 +903,9 @@ if not st.session_state.messages and not st.session_state.pending_chat_prompt:
     else:
         st.markdown(
             """
-            <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 16px 20px; text-align: center; margin-top: 6px;">
-                <div style="font-weight: 700; font-size: 0.95rem; color: #0f172a; margin-bottom: 4px;">📂 Choose a Document to Get Started</div>
-                <p style="font-size: 0.84rem; color: #64748b; margin: 0 0 12px 0;">
+            <div class="empty-picker-box">
+                <div class="empty-picker-title">📂 Choose a Document to Get Started</div>
+                <p class="empty-picker-desc">
                     Pick an instant demo below to start asking questions immediately, or open the <b>sidebar (top-left ☰)</b> to upload your own TXT or PDF file.
                 </p>
             </div>
@@ -737,7 +1024,7 @@ for idx, msg in enumerate(st.session_state.messages):
                 chunk_id = html.escape(str(resp_data.get("chunk_id", "1")))
                 dist = resp_data.get("distance", 0.0)
                 timestamp = msg.get("timestamp", "")
-                time_html = f'<span style="color: #64748b; font-size: 0.78rem; font-weight: 400; margin-left: 6px;">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
+                time_html = f'<span class="cite-time">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
 
                 st.markdown(
                     f"""
