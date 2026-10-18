@@ -167,11 +167,16 @@ st.markdown(
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    /* Chat workspace container: generous spacing and maximum readability */
+    /* Chat workspace container: generous top clearance so header is never obscured by Streamlit toolbar */
     .block-container {
-        padding-top: 1.8rem;
+        padding-top: 5rem !important;
         padding-bottom: 2.5rem;
         max-width: 980px;
+    }
+
+    /* Style Streamlit top header toolbar safely */
+    header[data-testid="stHeader"] {
+        background-color: transparent !important;
     }
 
     /* Native chat message bubble enhancements */
@@ -224,31 +229,95 @@ st.markdown(
         color: #047857;
         border-color: #a7f3d0;
     }
-    .cite-pill-time {
-        color: #64748b;
-        background: #f8fafc;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
+# Helper function to index a document payload into ChromaDB
+def index_file_data(file_bytes: bytes, filename: str, c_size: int, c_overlap: int, dist_thresh: float, t_k: int, key: str, url: str, mdl: str) -> bool:
+    try:
+        with st.spinner(f"Extracting text and indexing '{filename}'..."):
+            doc = load_document(file_bytes, filename=filename)
+            chunks = chunk_document(doc, chunk_size=c_size, chunk_overlap=c_overlap)
+
+            if st.session_state.embedding_service is None:
+                st.session_state.embedding_service = EmbeddingService(settings.embedding_model)
+            if st.session_state.vector_store is None:
+                st.session_state.vector_store = ChromaVectorStore(settings.chroma_persist_directory)
+
+            retriever = SemanticRetriever(
+                vector_store=st.session_state.vector_store,
+                embedding_service=st.session_state.embedding_service,
+                distance_threshold=dist_thresh,
+                top_k=t_k,
+            )
+            retriever.index_document(doc, chunks, force_reindex=True)
+
+            active_api_key = key.strip() if key else settings.active_api_key
+            qa_engine = QAEngine(
+                retriever=retriever,
+                api_key=active_api_key,
+                base_url=url.strip() if url else settings.active_base_url,
+                model=mdl.strip() if mdl else settings.active_model,
+                distance_threshold=dist_thresh,
+            )
+
+            st.session_state.qa_engine = qa_engine
+            st.session_state.current_doc_info = {
+                "filename": doc.filename,
+                "document_id": doc.document_id,
+                "file_type": doc.file_type.upper(),
+                "pages": len(doc.pages),
+                "chunks": len(chunks),
+                "characters": doc.total_characters,
+                "full_text": doc.full_text,
+            }
+            st.session_state.sample_selected = None
+            st.session_state.sample_filename = None
+            st.success(f"Indexed '{doc.filename}' ({len(chunks)} chunks)!")
+            return True
+    except EmptyFileError as e:
+        st.error(f"Empty Document: {str(e)}")
+    except UnsupportedFileTypeError as e:
+        st.error(f"Unsupported File: {str(e)}")
+    except UnreadableFileError as e:
+        st.error(f"Unreadable File: {str(e)}")
+    except NoExtractableTextError as e:
+        st.error(f"Text Extraction Failed: {str(e)}")
+    except Exception as e:
+        st.error(f"Processing Error: {str(e)}")
+    return False
+
+
+# Default retrieval & model hyperparameters
+api_key_input = settings.active_api_key if settings.has_api_key else ""
+base_url_input = settings.active_base_url
+model_input = settings.active_model
+use_llm = True
+top_k = settings.top_k
+distance_threshold = settings.retrieval_distance_threshold
+chunk_size = 800
+chunk_overlap = 150
+
+
 # ==============================================================================
 # SIDEBAR: DOCUMENT INGESTION, ADVANCED SETTINGS & SESSION STORAGE
 # ==============================================================================
 with st.sidebar:
-    st.markdown("### 📄 Document Ingestion")
+    st.markdown("## 📂 Document Workspace")
+    st.caption("Upload your own document or select a demo to start.")
 
+    st.markdown("#### 1️⃣ Choose Document")
     uploaded_file = st.file_uploader(
-        "Upload Document (.txt or .pdf)",
+        "Upload a TXT or PDF file:",
         type=["txt", "pdf"],
-        help="Upload a text file or text-based PDF to index into ChromaDB.",
-        label_visibility="collapsed",
+        help="Upload any text file or text-based PDF to index into ChromaDB.",
+        label_visibility="visible",
     )
 
-    # Preset Sample Documents
-    st.caption("Or load an instant sample dataset:")
+    st.markdown("<div style='font-size: 0.82rem; font-weight: 600; color: #475569; margin: 6px 0 3px 0;'>Or select an instant demo:</div>", unsafe_allow_html=True)
     col_sb1, col_sb2 = st.columns(2)
     with col_sb1:
         if st.button("🏢 Datavex", use_container_width=True, help="Load Datavex corporate profile"):
@@ -256,7 +325,8 @@ with st.sidebar:
             if sample_path.exists():
                 st.session_state.sample_selected = sample_path.read_bytes()
                 st.session_state.sample_filename = "datavex_profile.txt"
-                st.toast("Loaded 'datavex_profile.txt' into staging.", icon="📋")
+                st.toast("Selected 'datavex_profile.txt'. Click Index to load.", icon="📋")
+                st.rerun()
             else:
                 st.error("data/datavex_profile.txt not found.")
     with col_sb2:
@@ -265,7 +335,8 @@ with st.sidebar:
             if sample_path.exists():
                 st.session_state.sample_selected = sample_path.read_bytes()
                 st.session_state.sample_filename = "sample_report.txt"
-                st.toast("Loaded 'sample_report.txt' into staging.", icon="📋")
+                st.toast("Selected 'sample_report.txt'. Click Index to load.", icon="📋")
+                st.rerun()
             else:
                 st.error("sample_docs/sample_report.txt not found.")
 
@@ -279,145 +350,53 @@ with st.sidebar:
         file_bytes_to_process = st.session_state.sample_selected
         filename_to_process = st.session_state.sample_filename
 
-    # Advanced Retrieval Parameters Expander (Cleanly tucked away as requested)
-    with st.expander("🛠️ Advanced Settings & Retrieval Controls", expanded=False):
-        st.markdown("**LLM API Configuration**")
-        api_key_input = st.text_input(
-            "API Key",
-            value=settings.active_api_key if settings.has_api_key else "",
-            type="password",
-            placeholder="Configured in .env or enter here...",
-            help="API key for high-speed LLM inference. Stored securely in session.",
+    # Staged document notice and index button (Step 2 - immediately visible!)
+    is_new_staged = file_bytes_to_process is not None and (
+        st.session_state.current_doc_info is None
+        or st.session_state.current_doc_info.get("filename") != filename_to_process
+    )
+    if is_new_staged:
+        st.markdown(
+            f"""
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 12px; margin: 12px 0 8px 0;">
+                <div style="font-size: 0.70rem; font-weight: 700; color: #1d4ed8; text-transform: uppercase;">Ready to Index</div>
+                <div style="font-size: 0.86rem; font-weight: 600; color: #1e40af; word-break: break-all;">
+                    📄 {html.escape(filename_to_process)}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        base_url_input = st.text_input(
-            "API Base URL",
-            value=settings.active_base_url,
-            help="Target endpoint base URL.",
-        )
-        model_input = st.text_input(
-            "Model Name",
-            value=settings.active_model,
-            help="Target chat model identifier.",
-        )
-
-        st.markdown("---")
-        st.markdown("**Answer Synthesis Engine**")
-        generation_mode = st.radio(
-            "Generation Mode",
-            ["Natural Language Generation", "Local Extractive Fallback (Zero-Cost / Offline)"],
-            help="Select Cloud LLM for natural-language generation, or local extractive fallback if offline.",
-        )
-        use_llm = generation_mode.startswith("Natural Language")
-
-        st.markdown("---")
-        st.markdown("**Retrieval Hyperparameters**")
-        top_k = st.slider(
-            "Top Passages (Top-K)",
-            min_value=1,
-            max_value=6,
-            value=settings.top_k,
-            help="Number of nearest ChromaDB passages retrieved.",
-        )
-        distance_threshold = st.slider(
-            "Distance Cutoff Threshold",
-            min_value=0.30,
-            max_value=0.95,
-            value=settings.retrieval_distance_threshold,
-            step=0.01,
-            help="Maximum cosine distance cutoff (smaller = stricter relevance).",
-        )
-        chunk_size = st.number_input(
-            "Chunk Size (characters)",
-            min_value=100,
-            max_value=1500,
-            value=800,
-            step=50,
-            help="Calibrated for the 256-token limit of all-MiniLM-L6-v2.",
-        )
-        chunk_overlap = st.number_input(
-            "Chunk Overlap (characters)",
-            min_value=0,
-            max_value=300,
-            value=150,
-            step=20,
-            help="Character overlap between consecutive chunks.",
-        )
-
-        st.markdown("---")
-        st.caption(f"**Embedding Model:** `{settings.embedding_model}` (Local CPU)")
-        st.caption(f"**Vector Database:** ChromaDB (`{settings.chroma_persist_directory}`)")
-
-    # Indexing Trigger
-    if file_bytes_to_process is not None:
         if st.button(
-            f"📥 Index '{filename_to_process}'",
+            f"🚀 Index '{filename_to_process}' Now",
             type="primary",
             use_container_width=True,
             disabled=st.session_state.is_processing,
         ):
-            try:
-                with st.spinner("Extracting text and computing local embeddings..."):
-                    doc = load_document(file_bytes_to_process, filename=filename_to_process)
-                    chunks = chunk_document(doc, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-
-                    if st.session_state.embedding_service is None:
-                        st.session_state.embedding_service = EmbeddingService(settings.embedding_model)
-                    if st.session_state.vector_store is None:
-                        st.session_state.vector_store = ChromaVectorStore(settings.chroma_persist_directory)
-
-                    retriever = SemanticRetriever(
-                        vector_store=st.session_state.vector_store,
-                        embedding_service=st.session_state.embedding_service,
-                        distance_threshold=distance_threshold,
-                        top_k=top_k,
-                    )
-                    retriever.index_document(doc, chunks, force_reindex=True)
-
-                    active_api_key = api_key_input.strip() if api_key_input else settings.active_api_key
-                    qa_engine = QAEngine(
-                        retriever=retriever,
-                        api_key=active_api_key,
-                        base_url=base_url_input.strip() if base_url_input else settings.active_base_url,
-                        model=model_input.strip() if model_input else settings.active_model,
-                        distance_threshold=distance_threshold,
-                    )
-
-                    st.session_state.qa_engine = qa_engine
-                    st.session_state.current_doc_info = {
-                        "filename": doc.filename,
-                        "document_id": doc.document_id,
-                        "file_type": doc.file_type.upper(),
-                        "pages": len(doc.pages),
-                        "chunks": len(chunks),
-                        "characters": doc.total_characters,
-                        "full_text": doc.full_text,
-                    }
-                    st.success(f"Successfully indexed '{doc.filename}' ({len(chunks)} chunks)!")
-                    st.rerun()
-
-            except EmptyFileError as e:
-                st.error(f"Empty Document: {str(e)}")
-            except UnsupportedFileTypeError as e:
-                st.error(f"Unsupported File: {str(e)}")
-            except UnreadableFileError as e:
-                st.error(f"Unreadable File: {str(e)}")
-            except NoExtractableTextError as e:
-                st.error(f"Text Extraction Failed: {str(e)}")
-            except Exception as e:
-                st.error(f"Processing Error: {str(e)}")
+            if index_file_data(
+                file_bytes_to_process,
+                filename_to_process,
+                chunk_size,
+                chunk_overlap,
+                distance_threshold,
+                top_k,
+                api_key_input,
+                base_url_input,
+                model_input,
+            ):
+                st.rerun()
 
     # Active Document Status Card
     if st.session_state.current_doc_info is not None:
         info = st.session_state.current_doc_info
-        st.markdown("---")
         st.markdown(
             f"""
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Indexed Document</div>
-                <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a; word-break: break-all; margin-bottom: 8px;">
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin: 12px 0 8px 0;">
+                <div style="font-size: 0.70rem; font-weight: 700; color: #166534; text-transform: uppercase;">✅ Active Indexed Document</div>
+                <div style="font-weight: 700; font-size: 0.90rem; color: #14532d; word-break: break-all; margin: 4px 0 6px 0;">
                     📑 {html.escape(info['filename'])}
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.78rem; color: #475569;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.76rem; color: #166534;">
                     <div><b>Format:</b> {info['file_type']}</div>
                     <div><b>Pages:</b> {info['pages']}</div>
                     <div><b>Chunks:</b> {info['chunks']}</div>
@@ -441,9 +420,78 @@ with st.sidebar:
                 st.markdown(f"**Full Extracted Text ({info['filename']}):**")
                 st.text_area("Extracted Content", value=info["full_text"], height=350, disabled=True, label_visibility="collapsed")
 
-    # Conversation Storage & Export
+    # Step 3: Advanced Settings (placed neatly inside an expander so it doesn't block the user)
     st.markdown("---")
-    st.markdown("### 💾 Conversation")
+    with st.expander("⚙️ Advanced Retrieval Settings (Optional)", expanded=False):
+        st.markdown("**LLM API Configuration**")
+        api_key_input = st.text_input(
+            "API Key",
+            value=api_key_input,
+            type="password",
+            placeholder="Configured in .env or enter here...",
+            help="API key for high-speed LLM inference. Stored securely in session.",
+        )
+        base_url_input = st.text_input(
+            "API Base URL",
+            value=base_url_input,
+            help="Target endpoint base URL.",
+        )
+        model_input = st.text_input(
+            "Model Name",
+            value=model_input,
+            help="Target chat model identifier.",
+        )
+
+        st.markdown("---")
+        st.markdown("**Answer Synthesis Engine**")
+        generation_mode = st.radio(
+            "Generation Mode",
+            ["Natural Language Generation", "Local Extractive Fallback (Zero-Cost / Offline)"],
+            help="Select Cloud LLM for natural-language generation, or local extractive fallback if offline.",
+        )
+        use_llm = generation_mode.startswith("Natural Language")
+
+        st.markdown("---")
+        st.markdown("**Retrieval Hyperparameters**")
+        top_k = st.slider(
+            "Top Passages (Top-K)",
+            min_value=1,
+            max_value=6,
+            value=top_k,
+            help="Number of nearest ChromaDB passages retrieved.",
+        )
+        distance_threshold = st.slider(
+            "Distance Cutoff Threshold",
+            min_value=0.30,
+            max_value=0.95,
+            value=distance_threshold,
+            step=0.01,
+            help="Maximum cosine distance cutoff (smaller = stricter relevance).",
+        )
+        chunk_size = st.number_input(
+            "Chunk Size (characters)",
+            min_value=100,
+            max_value=1500,
+            value=chunk_size,
+            step=50,
+            help="Calibrated for the 256-token limit of all-MiniLM-L6-v2.",
+        )
+        chunk_overlap = st.number_input(
+            "Chunk Overlap (characters)",
+            min_value=0,
+            max_value=300,
+            value=chunk_overlap,
+            step=20,
+            help="Character overlap between consecutive chunks.",
+        )
+
+        st.markdown("---")
+        st.caption(f"**Embedding Model:** `{settings.embedding_model}` (Local CPU)")
+        st.caption(f"**Vector Database:** ChromaDB (`{settings.chroma_persist_directory}`)")
+
+    # Step 4: Conversation History & Export
+    st.markdown("---")
+    st.markdown("### 💾 Conversation History")
     msg_count = len(st.session_state.messages)
     turns_count = msg_count // 2
     st.caption(f"{msg_count} messages ({turns_count} Q&A turns) in history.")
@@ -535,11 +583,13 @@ st.divider()
 if not st.session_state.messages and not st.session_state.pending_chat_prompt:
     st.markdown(
         """
-        <div style="padding: 32px 24px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; text-align: center; margin: 20px 0;">
-            <div style="font-size: 2.4rem; margin-bottom: 8px;">🤖 💬</div>
-            <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;">Welcome to Document Q&A</h3>
-            <p style="color: #64748b; font-size: 0.90rem; max-width: 580px; margin: 0 auto 18px auto; line-height: 1.55;">
-                Ask any question regarding your uploaded document. Answers are strictly verified against indexed ChromaDB vector passages to guarantee factual precision.
+        <div style="padding: 12px 18px; border-radius: 10px; background: #ffffff; border: 1px solid #e2e8f0; margin: 6px 0 14px 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.25rem;">🤖</span>
+                <span style="font-weight: 700; font-size: 0.96rem; color: #0f172a;">Welcome to Document Q&A</span>
+            </div>
+            <p style="color: #64748b; font-size: 0.82rem; margin: 4px 0 0 0; line-height: 1.45;">
+                Ask questions about your uploaded document. Answers are strictly grounded in vector passages with zero hallucination.
             </p>
         </div>
         """,
@@ -547,7 +597,7 @@ if not st.session_state.messages and not st.session_state.pending_chat_prompt:
     )
 
     if st.session_state.current_doc_info:
-        st.markdown("<p style='font-size: 0.86rem; font-weight: 600; color: #475569; margin-bottom: 8px;'>💡 Try asking an example question:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.84rem; font-weight: 600; color: #475569; margin-bottom: 6px;'>💡 Try asking an example question:</p>", unsafe_allow_html=True)
         col_q1, col_q2 = st.columns(2)
         with col_q1:
             if st.button("🏢 When was the company founded?", use_container_width=True):
@@ -564,7 +614,50 @@ if not st.session_state.messages and not st.session_state.pending_chat_prompt:
                 st.session_state.pending_chat_prompt = "Who is the CEO?"
                 st.rerun()
     else:
-        st.info("👈 **Get started**: Upload a TXT or PDF document in the sidebar, or click one of the sample buttons ('Datavex' or 'Solar Tech').")
+        st.markdown(
+            """
+            <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 16px 20px; text-align: center; margin-top: 6px;">
+                <div style="font-weight: 700; font-size: 0.95rem; color: #0f172a; margin-bottom: 4px;">📂 Choose a Document to Get Started</div>
+                <p style="font-size: 0.84rem; color: #64748b; margin: 0 0 12px 0;">
+                    Pick an instant demo below to start asking questions immediately, or open the <b>sidebar (top-left ☰)</b> to upload your own TXT or PDF file.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            if st.button("🏢 Quick Start with Datavex Profile", use_container_width=True, type="primary"):
+                sample_path = Path("data/datavex_profile.txt")
+                if sample_path.exists():
+                    index_file_data(
+                        sample_path.read_bytes(),
+                        "datavex_profile.txt",
+                        chunk_size,
+                        chunk_overlap,
+                        distance_threshold,
+                        top_k,
+                        api_key_input,
+                        base_url_input,
+                        model_input,
+                    )
+                    st.rerun()
+        with col_m2:
+            if st.button("☀️ Quick Start with Solar Tech Report", use_container_width=True):
+                sample_path = Path("sample_docs/sample_report.txt")
+                if sample_path.exists():
+                    index_file_data(
+                        sample_path.read_bytes(),
+                        "sample_report.txt",
+                        chunk_size,
+                        chunk_overlap,
+                        distance_threshold,
+                        top_k,
+                        api_key_input,
+                        base_url_input,
+                        model_input,
+                    )
+                    st.rerun()
 
 
 # Render Conversation Messages
@@ -642,7 +735,7 @@ for idx, msg in enumerate(st.session_state.messages):
                 chunk_id = html.escape(str(resp_data.get("chunk_id", "1")))
                 dist = resp_data.get("distance", 0.0)
                 timestamp = msg.get("timestamp", "")
-                time_html = f'<span class="cite-pill cite-pill-time">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
+                time_html = f'<span style="color: #64748b; font-size: 0.78rem; font-weight: 400; margin-left: 6px;">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
 
                 st.markdown(
                     f"""
