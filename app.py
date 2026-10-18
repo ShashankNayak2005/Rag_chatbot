@@ -197,38 +197,6 @@ st.markdown(
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         margin-right: 5%;
     }
-
-    /* Compact citation tag strip */
-    .cite-pill-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 8px;
-        margin-bottom: 8px;
-    }
-    .cite-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 3px 9px;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid #e2e8f0;
-    }
-    .cite-pill-sim {
-        background: #ecfdf5;
-        color: #047857;
-        border-color: #a7f3d0;
-    }
-
-    /* Clean empty state prompt cards */
-    .example-btn-label {
-        font-size: 0.86rem;
-        font-weight: 500;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -631,56 +599,10 @@ for idx, msg in enumerate(st.session_state.messages):
             # Case B: Refusal / Evidence Absent
             elif not is_found or content == ANSWER_NOT_FOUND_IN_DOCUMENT:
                 st.warning(f"⚠️ **{ANSWER_NOT_FOUND_IN_DOCUMENT}**")
-                st.caption(
-                    "The question contains requested facts that are not present in the indexed document. "
-                    "Strict evidence validation intercepted this query to eliminate hallucinations."
-                )
-                passages = resp_data.get("retrieved_passages", [])
-                if passages:
-                    with st.expander(f"🔍 Inspect {len(passages)} ChromaDB Passages Evaluated", expanded=False):
-                        for p_idx, p in enumerate(passages, start=1):
-                            st.markdown(f"**Rank #{p_idx}** • Page {p.get('page_number', 1)} • Chunk #{p.get('chunk_id', p_idx)} • Distance: `{p.get('distance', 1.0):.4f}`")
-                            st.code(p.get("text", "").strip(), language="text")
 
             # Case C: Grounded Answer
             else:
                 st.markdown(content)
-
-                # Compact Citation Elements
-                source_file = html.escape(str(resp_data.get("source_filename", "N/A")))
-                page_num = html.escape(str(resp_data.get("page_number", "1")))
-                chunk_id = html.escape(str(resp_data.get("chunk_id", "1")))
-                dist = resp_data.get("distance", 0.0)
-
-                st.markdown(
-                    f"""
-                    <div class="cite-pill-row">
-                        <span class="cite-pill">📄 <b>File:</b> {source_file}</span>
-                        <span class="cite-pill">📖 <b>Page:</b> {page_num}</span>
-                        <span class="cite-pill">🧩 <b>Chunk:</b> #{chunk_id}</span>
-                        <span class="cite-pill cite-pill-sim">🎯 <b>Dist:</b> {dist:.4f}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                # Expandable Supporting Evidence & Diagnostics
-                with st.expander("🔍 View Supporting Evidence & Retrieval Diagnostics", expanded=False):
-                    if resp_data.get("supporting_passage"):
-                        st.markdown("**💡 Direct Supporting Document Evidence:**")
-                        st.info(f"\"{resp_data['supporting_passage'].strip()}\"")
-
-                    passages = resp_data.get("retrieved_passages", [])
-                    if passages:
-                        st.markdown(f"**Evaluated ChromaDB Candidate Passages ({len(passages)} total):**")
-                        for p_idx, p in enumerate(passages, start=1):
-                            st.markdown(
-                                f"**Rank #{p_idx}** • Page {p.get('page_number', 1)} • Chunk #{p.get('chunk_id', p_idx)} • Cosine Distance: `{p.get('distance', 1.0):.4f}`"
-                            )
-                            st.code(p.get("text", "").strip(), language="text")
-
-            if msg.get("timestamp"):
-                st.caption(f"🕒 {msg.get('timestamp')}")
 
 
 # Handle pending prompt execution
