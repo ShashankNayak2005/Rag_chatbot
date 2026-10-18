@@ -6,7 +6,7 @@
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-0.4%2B-orange.svg)](https://www.trychroma.com/)
 [![Groq Cloud](https://img.shields.io/badge/LLM-Groq%20Cloud-f55036.svg)](https://groq.com/)
 [![Sentence Transformers](https://img.shields.io/badge/Embeddings-all--MiniLM--L6--v2-green.svg)](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-[![Tests Passing](https://img.shields.io/badge/tests-123%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-125%20passed-brightgreen.svg)]()
 
 An enterprise-grade, evidence-grounded **Retrieval-Augmented Generation (RAG)** application designed for high-accuracy question answering across structured and unstructured text documents (PDF and TXT). 
 
@@ -176,7 +176,7 @@ rag-chatbot/
 │   ├── run_evaluation.py           # Automated evaluation runner computing 8 quantitative metrics
 │   └── evaluation_report.json      # Generated benchmark report with accuracy & latency scores
 │
-└── tests/                          # Comprehensive automated unit & integration test suite (123 tests)
+└── tests/                          # Comprehensive automated unit & integration test suite (125 tests)
     ├── __init__.py                 # Test suite package initialiser
     ├── conftest.py                 # Pytest shared fixtures (mock data, temp vector stores)
     ├── test_regression_suite.py    # Regression tests (tokenizer limit, abstention, citations, isolation, repeated uploads, API failures)
@@ -207,7 +207,7 @@ rag-chatbot/
 | **`sample_documents/`**| **Ground-Truth Data** | Contains the exact test documents (`datavex_sample.txt` and `coastaltech_sample.txt`) used by the CLI runner and acceptance tests to verify 100% answer accuracy. |
 | **`sample_docs/`** | **Multi-Format Assets** | Provides realistic multi-page PDFs (`sample_article.pdf`) and long technical reports (`sample_report.txt`) for validating page-number tracking, chunk overlap, and complex multi-page extraction. |
 | **`evaluation/`** | **Quantitative Benchmarking** | Houses the automated evaluation harness. `run_evaluation.py` evaluates 22 distinct questions across precision, recall, refusal accuracy, and citation provenance, generating a structured JSON audit report. |
-| **`tests/`** | **Automated Quality Gate** | 18 modular pytest files containing 123 automated tests that validate every component independently (loader, chunker, retriever, engine, citations, regression suite) before production deployment. |
+| **`tests/`** | **Automated Quality Gate** | 16 modular pytest files containing 125 automated tests that validate every component independently (loader, chunker, retriever, engine, citations, regression suite) before production deployment. |
 | **`data/`** | **Runtime Persistence** | Local working directory for temporary run artifacts, persistent conversation dumps, and fallback data files. |
 
 ---
@@ -329,10 +329,12 @@ The terminal will output the local network URL:
 Open your browser to `http://localhost:8501`.
 
 #### Using the Web Interface:
-1. **Upload Document:** Click the file uploader in the left sidebar and upload a `.pdf` or `.txt` document (e.g., `sample_documents/datavex_sample.txt`).
-2. **Review Ingestion Stats:** The sidebar will display document metadata, total characters, chunks created, and vector collection status.
-3. **Ask Questions:** Type questions into the chat input at the bottom (e.g., *"Where is the headquarters of Datavex?"* or *"Who is the CEO?"*).
-4. **Inspect Provenance:** Click the collapsible **🔍 Inspect ChromaDB Passages Evaluated** section beneath grounded responses to view exact chunk IDs, cosine distances, and source excerpts.
+1. **Prominent Sidebar Toggle:** Click the attractive blue `📂 Document Workspace` pill button in the top-left to expand the sidebar.
+2. **Upload Document:** Click the file uploader in the sidebar to upload a `.pdf` or `.txt` document, or click one of the instant demo buttons (**Datavex** or **Solar Tech**).
+3. **Hero Container Box:** The main workspace features an elegant boxed header with the **📄 Document Q&A** title, **RAG Assistant** tag, grounding guarantee, and live **🟢 Active Document** status card.
+4. **Ask Questions:** Type your query into the native chat input at the bottom (e.g., *"Where is the headquarters of Datavex?"* or test guardrails with *"Who is the CEO?"*).
+5. **Exact Provenance Tracking:** Grounded answers display clean factual text accompanied by dedicated provenance pills (`📄 File`, `📖 Page`, `🧩 Chunk`, `🎯 Dist`, and `🕒 Timestamp`) with zero duplicate text citations.
+6. **Adaptive Theming:** Defaults to a clean, crisp Light theme with full automatic Dark theme support.
 
 ---
 
@@ -359,7 +361,7 @@ Interactive OpenAPI Swagger documentation will be available at:
 The codebase contains extensive automated test coverage ensuring 100% correctness across all modules.
 
 ### Running Pytest Suite
-Execute the entire test suite of 123 tests (runs 100% offline without consuming API tokens):
+Execute the entire test suite of 125 tests (runs 100% offline without consuming API tokens):
 
 ```bash
 python -m pytest -v
@@ -367,7 +369,7 @@ python -m pytest -v
 
 **Expected Output:**
 ```text
-============================= 123 passed in 155.96s =============================
+============================= 125 passed in 149.65s =============================
 ```
 
 #### Run Specific Modular Tests:

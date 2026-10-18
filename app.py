@@ -33,7 +33,7 @@ from src.retriever import SemanticRetriever
 
 import src.qa_engine
 importlib.reload(src.qa_engine)
-from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT, strip_source_citation_text
+from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT
 from src.config import settings
 
 # Path for persistent conversation history
@@ -157,7 +157,7 @@ if st.session_state.qa_engine is not None:
     except Exception:
         pass
 
-# Clean, professional styling: light theme default with full adaptive dark theme visibility
+# Clean, professional styling: subtle borders, light surfaces, refined chat spacing
 st.markdown(
     """
     <style>
@@ -188,63 +188,19 @@ st.markdown(
         transition: all 0.15s ease-in-out;
     }
 
-    /* User messages: light theme default */
+    /* User messages: light gray background, subtle border, right alignment feel */
     div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
-        color: #0f172a;
         margin-left: 10%;
     }
 
-    /* Assistant messages: light theme default */
+    /* Assistant messages: clean crisp white, subtle border */
     div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        color: #0f172a;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         margin-right: 5%;
-    }
-
-    /* Dark Theme chat bubbles - via prefers-color-scheme and data-theme="dark" */
-    @media (prefers-color-scheme: dark) {
-        div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-            color: #f8fafc !important;
-        }
-        div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
-            background-color: #0f172a !important;
-            border-color: #334155 !important;
-            color: #f8fafc !important;
-        }
-        div[data-testid="stChatMessage"] p,
-        div[data-testid="stChatMessage"] span,
-        div[data-testid="stChatMessage"] li {
-            color: #f8fafc !important;
-        }
-    }
-
-    [data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]),
-    .stApp[data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
-        background-color: #1e293b !important;
-        border-color: #334155 !important;
-        color: #f8fafc !important;
-    }
-
-    [data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]),
-    .stApp[data-theme="dark"] div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
-        background-color: #0f172a !important;
-        border-color: #334155 !important;
-        color: #f8fafc !important;
-    }
-
-    [data-theme="dark"] div[data-testid="stChatMessage"] p,
-    .stApp[data-theme="dark"] div[data-testid="stChatMessage"] p,
-    [data-theme="dark"] div[data-testid="stChatMessage"] span,
-    .stApp[data-theme="dark"] div[data-testid="stChatMessage"] span,
-    [data-theme="dark"] div[data-testid="stChatMessage"] li,
-    .stApp[data-theme="dark"] div[data-testid="stChatMessage"] li {
-        color: #f8fafc !important;
     }
 
     /* Compact citation metadata tags */
@@ -273,249 +229,229 @@ st.markdown(
         color: #047857;
         border-color: #a7f3d0;
     }
-    .cite-time {
-        color: #64748b;
-        font-size: 0.78rem;
-        font-weight: 400;
-        margin-left: 6px;
-    }
 
-    @media (prefers-color-scheme: dark) {
-        .cite-pill {
-            background: #1e293b !important;
-            color: #cbd5e1 !important;
-            border-color: #334155 !important;
-        }
-        .cite-pill-sim {
-            background: rgba(16, 185, 129, 0.2) !important;
-            color: #34d399 !important;
-            border-color: rgba(52, 211, 153, 0.4) !important;
-        }
-        .cite-time {
-            color: #94a3b8 !important;
-        }
-    }
-
-    [data-theme="dark"] .cite-pill,
-    .stApp[data-theme="dark"] .cite-pill {
-        background: #1e293b !important;
-        color: #cbd5e1 !important;
-        border-color: #334155 !important;
-    }
-    [data-theme="dark"] .cite-pill-sim,
-    .stApp[data-theme="dark"] .cite-pill-sim {
-        background: rgba(16, 185, 129, 0.2) !important;
-        color: #34d399 !important;
-        border-color: rgba(52, 211, 153, 0.4) !important;
-    }
-    [data-theme="dark"] .cite-time,
-    .stApp[data-theme="dark"] .cite-time {
-        color: #94a3b8 !important;
-    }
-
-    /* App Header Typography & Badges */
-    .app-title {
-        margin: 0;
-        font-weight: 800;
-        font-size: 1.55rem;
-        color: #0f172a;
-        letter-spacing: -0.3px;
-    }
-    .app-badge {
-        font-size: 0.74rem;
-        font-weight: 600;
-        background: #f1f5f9;
-        color: #475569;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        border: 1px solid #e2e8f0;
-    }
-    .app-subtitle {
-        margin: 0;
-        color: #64748b;
-        font-size: 0.88rem;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .app-title { color: #f8fafc !important; }
-        .app-badge { background: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
-        .app-subtitle { color: #94a3b8 !important; }
-    }
-    [data-theme="dark"] .app-title, .stApp[data-theme="dark"] .app-title { color: #f8fafc !important; }
-    [data-theme="dark"] .app-badge, .stApp[data-theme="dark"] .app-badge { background: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
-    [data-theme="dark"] .app-subtitle, .stApp[data-theme="dark"] .app-subtitle { color: #94a3b8 !important; }
-
-    /* Welcome Box & Empty State */
-    .welcome-box {
-        padding: 12px 18px;
-        border-radius: 10px;
+    /* Unified Header Box */
+    .header-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        margin: 6px 0 14px 0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
-    .welcome-title {
-        font-weight: 700;
-        font-size: 0.96rem;
+    .header-left {
+        flex: 1 1 320px;
+    }
+    .header-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 3px;
+    }
+    .header-title-text {
+        margin: 0;
+        font-weight: 800;
+        font-size: 1.45rem;
         color: #0f172a;
+        letter-spacing: -0.3px;
+        line-height: 1.2;
     }
-    .welcome-desc {
+    .header-badge-tag {
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        letter-spacing: 0.2px;
+    }
+    .header-desc {
+        margin: 0;
         color: #64748b;
-        font-size: 0.82rem;
-        margin: 4px 0 0 0;
+        font-size: 0.84rem;
         line-height: 1.45;
     }
-    .empty-picker-box {
-        background: #f8fafc;
-        border: 1.5px dashed #cbd5e1;
-        border-radius: 10px;
-        padding: 16px 20px;
-        text-align: center;
-        margin-top: 6px;
+    .header-right {
+        flex: 0 0 auto;
     }
-    .empty-picker-title {
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: #0f172a;
-        margin-bottom: 4px;
+    .header-status-card {
+        border-radius: 8px;
+        padding: 8px 14px;
+        text-align: right;
+        min-width: 175px;
     }
-    .empty-picker-desc {
-        font-size: 0.84rem;
-        color: #64748b;
-        margin: 0 0 12px 0;
-    }
-    .section-helper-text {
-        font-size: 0.84rem;
-        font-weight: 600;
-        color: #475569;
-        margin-bottom: 6px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .welcome-box { background: #1e293b !important; border-color: #334155 !important; }
-        .welcome-title { color: #f8fafc !important; }
-        .welcome-desc { color: #cbd5e1 !important; }
-        .empty-picker-box { background: #1e293b !important; border-color: #475569 !important; }
-        .empty-picker-title { color: #f8fafc !important; }
-        .empty-picker-desc { color: #cbd5e1 !important; }
-        .section-helper-text { color: #cbd5e1 !important; }
-    }
-    [data-theme="dark"] .welcome-box, .stApp[data-theme="dark"] .welcome-box { background: #1e293b !important; border-color: #334155 !important; }
-    [data-theme="dark"] .welcome-title, .stApp[data-theme="dark"] .welcome-title { color: #f8fafc !important; }
-    [data-theme="dark"] .welcome-desc, .stApp[data-theme="dark"] .welcome-desc { color: #cbd5e1 !important; }
-    [data-theme="dark"] .empty-picker-box, .stApp[data-theme="dark"] .empty-picker-box { background: #1e293b !important; border-color: #475569 !important; }
-    [data-theme="dark"] .empty-picker-title, .stApp[data-theme="dark"] .empty-picker-title { color: #f8fafc !important; }
-    [data-theme="dark"] .empty-picker-desc, .stApp[data-theme="dark"] .empty-picker-desc { color: #cbd5e1 !important; }
-    [data-theme="dark"] .section-helper-text, .stApp[data-theme="dark"] .section-helper-text { color: #cbd5e1 !important; }
-
-    /* Active Document Cards (Sidebar & Header) */
-    .card-doc-active {
+    .header-status-card.active {
         background: #f0fdf4;
         border: 1px solid #bbf7d0;
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin: 10px 0 8px 0;
     }
-    .card-doc-active .active-badge {
-        font-size: 0.70rem;
+    .header-status-card.active .status-label {
+        font-size: 0.68rem;
         font-weight: 700;
         color: #166534;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .card-doc-active .active-filename {
-        font-weight: 700;
+    .header-status-card.active .status-filename {
         font-size: 0.88rem;
-        color: #14532d;
-        word-break: break-all;
-        margin: 3px 0 5px 0;
-    }
-    .card-doc-active .active-meta {
-        font-size: 0.74rem;
-        color: #166534;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .card-doc-active {
-            background: rgba(16, 185, 129, 0.15) !important;
-            border-color: rgba(16, 185, 129, 0.4) !important;
-        }
-        .card-doc-active .active-badge { color: #34d399 !important; }
-        .card-doc-active .active-filename { color: #f0fdf4 !important; }
-        .card-doc-active .active-meta { color: #a7f3d0 !important; }
-    }
-    [data-theme="dark"] .card-doc-active, .stApp[data-theme="dark"] .card-doc-active {
-        background: rgba(16, 185, 129, 0.15) !important;
-        border-color: rgba(16, 185, 129, 0.4) !important;
-    }
-    [data-theme="dark"] .card-doc-active .active-badge, .stApp[data-theme="dark"] .card-doc-active .active-badge { color: #34d399 !important; }
-    [data-theme="dark"] .card-doc-active .active-filename, .stApp[data-theme="dark"] .card-doc-active .active-filename { color: #f0fdf4 !important; }
-    [data-theme="dark"] .card-doc-active .active-meta, .stApp[data-theme="dark"] .card-doc-active .active-meta { color: #a7f3d0 !important; }
-
-    /* Staged Document Card (Sidebar) */
-    .card-doc-staged {
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin: 12px 0 8px 0;
-    }
-    .card-doc-staged .staged-badge {
-        font-size: 0.70rem;
         font-weight: 700;
-        color: #1d4ed8;
-        text-transform: uppercase;
+        color: #15803d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+        margin: 2px 0;
     }
-    .card-doc-staged .staged-filename {
-        font-size: 0.86rem;
-        font-weight: 600;
-        color: #1e40af;
-        word-break: break-all;
+    .header-status-card.active .status-chunks {
+        font-size: 0.72rem;
+        color: #16a34a;
     }
-
-    @media (prefers-color-scheme: dark) {
-        .card-doc-staged {
-            background: rgba(59, 130, 246, 0.15) !important;
-            border-color: rgba(59, 130, 246, 0.4) !important;
-        }
-        .card-doc-staged .staged-badge { color: #60a5fa !important; }
-        .card-doc-staged .staged-filename { color: #eff6ff !important; }
-    }
-    [data-theme="dark"] .card-doc-staged, .stApp[data-theme="dark"] .card-doc-staged {
-        background: rgba(59, 130, 246, 0.15) !important;
-        border-color: rgba(59, 130, 246, 0.4) !important;
-    }
-    [data-theme="dark"] .card-doc-staged .staged-badge, .stApp[data-theme="dark"] .card-doc-staged .staged-badge { color: #60a5fa !important; }
-    [data-theme="dark"] .card-doc-staged .staged-filename, .stApp[data-theme="dark"] .card-doc-staged .staged-filename { color: #eff6ff !important; }
-
-    /* No Document Card (Header) */
-    .card-doc-none {
+    .header-status-card.empty {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: right;
     }
-    .card-doc-none .none-badge {
-        font-size: 0.70rem;
+    .header-status-card.empty .status-label {
+        font-size: 0.68rem;
         font-weight: 700;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .card-doc-none .none-sub {
+    .header-status-card.empty .status-filename {
         font-size: 0.82rem;
         font-weight: 600;
         color: #475569;
+        margin: 2px 0;
+    }
+    .header-status-card.empty .status-chunks {
+        font-size: 0.70rem;
+        color: #94a3b8;
     }
 
-    @media (prefers-color-scheme: dark) {
-        .card-doc-none { background: #1e293b !important; border-color: #334155 !important; }
-        .card-doc-none .none-badge { color: #94a3b8 !important; }
-        .card-doc-none .none-sub { color: #cbd5e1 !important; }
+    /* Attractive, Highly Visible Sidebar Access Button */
+    div[data-testid="collapsedControl"] {
+        display: flex !important;
+        align-items: center !important;
+        top: 0.85rem !important;
+        left: 1rem !important;
+        z-index: 999999 !important;
+        visibility: visible !important;
     }
-    [data-theme="dark"] .card-doc-none, .stApp[data-theme="dark"] .card-doc-none { background: #1e293b !important; border-color: #334155 !important; }
-    [data-theme="dark"] .card-doc-none .none-badge, .stApp[data-theme="dark"] .card-doc-none .none-badge { color: #94a3b8 !important; }
-    [data-theme="dark"] .card-doc-none .none-sub, .stApp[data-theme="dark"] .card-doc-none .none-sub { color: #cbd5e1 !important; }
+
+    div[data-testid="collapsedControl"] button,
+    button[data-testid="stSidebarCollapsedControl"] {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border: 1px solid #1d4ed8 !important;
+        border-radius: 9px !important;
+        padding: 7px 14px !important;
+        font-weight: 700 !important;
+        font-size: 0.82rem !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    div[data-testid="collapsedControl"] button svg,
+    button[data-testid="stSidebarCollapsedControl"] svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke: #ffffff !important;
+        fill: #ffffff !important;
+    }
+
+    div[data-testid="collapsedControl"] button::after,
+    button[data-testid="stSidebarCollapsedControl"]::after {
+        content: "📂 Document Workspace" !important;
+        font-size: 0.80rem !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        letter-spacing: 0.2px !important;
+        white-space: nowrap !important;
+    }
+
+    div[data-testid="collapsedControl"] button:hover,
+    button[data-testid="stSidebarCollapsedControl"]:hover {
+        background: #1d4ed8 !important;
+        transform: translateY(-1px) scale(1.02) !important;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45) !important;
+    }
+
+    button[data-testid="stSidebarCollapseButton"] {
+        border-radius: 8px !important;
+        padding: 6px !important;
+        transition: all 0.15s ease !important;
+    }
+    button[data-testid="stSidebarCollapseButton"]:hover {
+        background: rgba(37, 99, 235, 0.08) !important;
+        color: #2563eb !important;
+    }
+
+    /* Dark Theme Support for Header Box */
+    @media (prefers-color-scheme: dark) {
+        .header-box {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+        }
+        .header-title-text { color: #f8fafc !important; }
+        .header-badge-tag {
+            background: rgba(37, 99, 235, 0.2) !important;
+            color: #60a5fa !important;
+            border-color: rgba(37, 99, 235, 0.4) !important;
+        }
+        .header-desc { color: #94a3b8 !important; }
+        .header-status-card.active {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: rgba(16, 185, 129, 0.35) !important;
+        }
+        .header-status-card.active .status-label { color: #34d399 !important; }
+        .header-status-card.active .status-filename { color: #f0fdf4 !important; }
+        .header-status-card.active .status-chunks { color: #a7f3d0 !important; }
+        .header-status-card.empty {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+        .header-status-card.empty .status-label { color: #94a3b8 !important; }
+        .header-status-card.empty .status-filename { color: #cbd5e1 !important; }
+        .header-status-card.empty .status-chunks { color: #64748b !important; }
+    }
+
+    [data-theme="dark"] .header-box, .stApp[data-theme="dark"] .header-box {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    }
+    [data-theme="dark"] .header-title-text, .stApp[data-theme="dark"] .header-title-text { color: #f8fafc !important; }
+    [data-theme="dark"] .header-badge-tag, .stApp[data-theme="dark"] .header-badge-tag {
+        background: rgba(37, 99, 235, 0.2) !important;
+        color: #60a5fa !important;
+        border-color: rgba(37, 99, 235, 0.4) !important;
+    }
+    [data-theme="dark"] .header-desc, .stApp[data-theme="dark"] .header-desc { color: #94a3b8 !important; }
+    [data-theme="dark"] .header-status-card.active, .stApp[data-theme="dark"] .header-status-card.active {
+        background: rgba(16, 185, 129, 0.15) !important;
+        border-color: rgba(16, 185, 129, 0.35) !important;
+    }
+    [data-theme="dark"] .header-status-card.active .status-label, .stApp[data-theme="dark"] .header-status-card.active .status-label { color: #34d399 !important; }
+    [data-theme="dark"] .header-status-card.active .status-filename, .stApp[data-theme="dark"] .header-status-card.active .status-filename { color: #f0fdf4 !important; }
+    [data-theme="dark"] .header-status-card.active .status-chunks, .stApp[data-theme="dark"] .header-status-card.active .status-chunks { color: #a7f3d0 !important; }
+    [data-theme="dark"] .header-status-card.empty, .stApp[data-theme="dark"] .header-status-card.empty {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] .header-status-card.empty .status-label, .stApp[data-theme="dark"] .header-status-card.empty .status-label { color: #94a3b8 !important; }
+    [data-theme="dark"] .header-status-card.empty .status-filename, .stApp[data-theme="dark"] .header-status-card.empty .status-filename { color: #cbd5e1 !important; }
+    [data-theme="dark"] .header-status-card.empty .status-chunks, .stApp[data-theme="dark"] .header-status-card.empty .status-chunks { color: #64748b !important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -604,7 +540,7 @@ with st.sidebar:
         label_visibility="visible",
     )
 
-    st.markdown("<div class='section-helper-text' style='margin: 6px 0 3px 0;'>Or select an instant demo:</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 0.82rem; font-weight: 600; color: #475569; margin: 6px 0 3px 0;'>Or select an instant demo:</div>", unsafe_allow_html=True)
     col_sb1, col_sb2 = st.columns(2)
     with col_sb1:
         if st.button("🏢 Datavex", use_container_width=True, help="Load Datavex corporate profile"):
@@ -643,17 +579,13 @@ with st.sidebar:
         or st.session_state.current_doc_info.get("filename") != filename_to_process
     )
     if is_new_staged:
-        st.markdown(
-            f"""
-            <div class="card-doc-staged">
-                <div class="staged-badge">Ready to Index</div>
-                <div class="staged-filename">
-                    📄 {html.escape(filename_to_process)}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st_box_html = (
+            '<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 12px; margin: 12px 0 8px 0;">'
+            '<div style="font-size: 0.70rem; font-weight: 700; color: #1d4ed8; text-transform: uppercase;">Ready to Index</div>'
+            f'<div style="font-size: 0.86rem; font-weight: 600; color: #1e40af; word-break: break-all;">📄 {html.escape(filename_to_process)}</div>'
+            '</div>'
         )
+        st.markdown(st_box_html, unsafe_allow_html=True)
         if st.button(
             f"🚀 Index '{filename_to_process}' Now",
             type="primary",
@@ -676,23 +608,19 @@ with st.sidebar:
     # Active Document Status Card
     if st.session_state.current_doc_info is not None:
         info = st.session_state.current_doc_info
-        st.markdown(
-            f"""
-            <div class="card-doc-active">
-                <div class="active-badge">✅ Active Indexed Document</div>
-                <div class="active-filename">
-                    📑 {html.escape(info['filename'])}
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;" class="active-meta">
-                    <div><b>Format:</b> {info['file_type']}</div>
-                    <div><b>Pages:</b> {info['pages']}</div>
-                    <div><b>Chunks:</b> {info['chunks']}</div>
-                    <div><b>Chars:</b> {info['characters']:,}</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        active_sb_html = (
+            '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin: 12px 0 8px 0;">'
+            '<div style="font-size: 0.70rem; font-weight: 700; color: #166534; text-transform: uppercase;">✅ Active Indexed Document</div>'
+            f'<div style="font-weight: 700; font-size: 0.90rem; color: #14532d; word-break: break-all; margin: 4px 0 6px 0;">📑 {html.escape(info["filename"])}</div>'
+            '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.76rem; color: #166534;">'
+            f'<div><b>Format:</b> {info["file_type"]}</div>'
+            f'<div><b>Pages:</b> {info["pages"]}</div>'
+            f'<div><b>Chunks:</b> {info["chunks"]}</div>'
+            f'<div><b>Chars:</b> {info["characters"]:,}</div>'
+            '</div>'
+            '</div>'
         )
+        st.markdown(active_sb_html, unsafe_allow_html=True)
 
         col_sw, col_vt = st.columns(2)
         with col_sw:
@@ -820,71 +748,62 @@ with st.sidebar:
 # MAIN WORKSPACE: COMPACT HEADER & PRIMARY CHAT INTERFACE
 # ==============================================================================
 
-# Compact Header with active document indicator
-head_col1, head_col2 = st.columns([2.5, 1.2], vertical_alignment="center")
-
-with head_col1:
-    st.markdown(
-        """
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
-            <h2 class="app-title">📄 Document Q&A</h2>
-            <span class="app-badge">RAG Assistant</span>
-        </div>
-        <p class="app-subtitle">
-            Answers grounded strictly in document evidence with exact citations and zero hallucinations.
-        </p>
-        """,
-        unsafe_allow_html=True,
+# Unified Header Box with active document indicator
+if st.session_state.current_doc_info:
+    info = st.session_state.current_doc_info
+    safe_fn = html.escape(info['filename'])
+    doc_status_html = (
+        '<div class="header-status-card active">'
+        '<div class="status-label">🟢 Active Document</div>'
+        f'<div class="status-filename" title="{safe_fn}">{safe_fn}</div>'
+        f'<div class="status-chunks">{info["chunks"]} chunks indexed</div>'
+        '</div>'
+    )
+else:
+    doc_status_html = (
+        '<div class="header-status-card empty">'
+        '<div class="status-label">⚪ No Document</div>'
+        '<div class="status-filename">Upload file in sidebar</div>'
+        '<div class="status-chunks">TXT or PDF accepted</div>'
+        '</div>'
     )
 
-with head_col2:
-    if st.session_state.current_doc_info:
-        info = st.session_state.current_doc_info
-        st.markdown(
-            f"""
-            <div class="card-doc-active" style="text-align: right; margin: 0; padding: 8px 12px;">
-                <div class="active-badge">🟢 Active Document</div>
-                <div class="active-filename" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 2px 0;">
-                    {html.escape(info['filename'])}
-                </div>
-                <div class="active-meta">{info['chunks']} chunks indexed</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            """
-            <div class="card-doc-none">
-                <div class="none-badge">⚪ No Document</div>
-                <div class="none-sub">Upload file in sidebar</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+header_box_html = (
+    '<div class="header-box">'
+    '<div class="header-left">'
+    '<div class="header-title-row">'
+    '<span style="font-size: 1.45rem;">📄</span>'
+    '<span class="header-title-text">Document Q&A</span>'
+    '<span class="header-badge-tag">RAG Assistant</span>'
+    '</div>'
+    '<p class="header-desc">'
+    'Answers grounded strictly in document evidence with exact citations and zero hallucinations.'
+    '</p>'
+    '</div>'
+    f'<div class="header-right">{doc_status_html}</div>'
+    '</div>'
+)
 
-st.divider()
+st.markdown(header_box_html, unsafe_allow_html=True)
 
 
 # Empty State with Interactive Suggested Questions
 if not st.session_state.messages and not st.session_state.pending_chat_prompt:
-    st.markdown(
-        """
-        <div class="welcome-box">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.25rem;">🤖</span>
-                <span class="welcome-title">Welcome to Document Q&A</span>
-            </div>
-            <p class="welcome-desc">
-                Ask questions about your uploaded document. Answers are strictly grounded in vector passages with zero hallucination.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    welcome_box_html = (
+        '<div style="padding: 12px 18px; border-radius: 10px; background: #ffffff; border: 1px solid #e2e8f0; margin: 6px 0 14px 0;">'
+        '<div style="display: flex; align-items: center; gap: 8px;">'
+        '<span style="font-size: 1.25rem;">🤖</span>'
+        '<span style="font-weight: 700; font-size: 0.96rem; color: #0f172a;">Welcome to Document Q&A</span>'
+        '</div>'
+        '<p style="color: #64748b; font-size: 0.82rem; margin: 4px 0 0 0; line-height: 1.45;">'
+        'Ask questions about your uploaded document. Answers are strictly grounded in vector passages with zero hallucination.'
+        '</p>'
+        '</div>'
     )
+    st.markdown(welcome_box_html, unsafe_allow_html=True)
 
     if st.session_state.current_doc_info:
-        st.markdown("<p class='section-helper-text'>💡 Try asking an example question:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.84rem; font-weight: 600; color: #475569; margin-bottom: 6px;'>💡 Try asking an example question:</p>", unsafe_allow_html=True)
         col_q1, col_q2 = st.columns(2)
         with col_q1:
             if st.button("🏢 When was the company founded?", use_container_width=True):
@@ -901,17 +820,15 @@ if not st.session_state.messages and not st.session_state.pending_chat_prompt:
                 st.session_state.pending_chat_prompt = "Who is the CEO?"
                 st.rerun()
     else:
-        st.markdown(
-            """
-            <div class="empty-picker-box">
-                <div class="empty-picker-title">📂 Choose a Document to Get Started</div>
-                <p class="empty-picker-desc">
-                    Pick an instant demo below to start asking questions immediately, or open the <b>sidebar (top-left ☰)</b> to upload your own TXT or PDF file.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        empty_picker_html = (
+            '<div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 16px 20px; text-align: center; margin-top: 6px;">'
+            '<div style="font-weight: 700; font-size: 0.95rem; color: #0f172a; margin-bottom: 4px;">📂 Choose a Document to Get Started</div>'
+            '<p style="font-size: 0.84rem; color: #64748b; margin: 0 0 12px 0;">'
+            'Pick an instant demo below to start asking questions immediately, or open the <b>sidebar (top-left ☰)</b> to upload your own TXT or PDF file.'
+            '</p>'
+            '</div>'
         )
+        st.markdown(empty_picker_html, unsafe_allow_html=True)
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             if st.button("🏢 Quick Start with Datavex Profile", use_container_width=True, type="primary"):
@@ -979,12 +896,11 @@ for idx, msg in enumerate(st.session_state.messages):
                             threshold=distance_threshold,
                             use_llm=False,
                         )
-                        clean_fb_ans = strip_source_citation_text(fb_res.answer)
-                        msg["content"] = clean_fb_ans
+                        msg["content"] = fb_res.answer
                         msg["response_data"] = {
                             "status": fb_res.status,
                             "is_found": fb_res.is_found,
-                            "answer": clean_fb_ans,
+                            "answer": fb_res.answer,
                             "question": fb_res.question,
                             "source_filename": fb_res.source_filename,
                             "page_number": fb_res.page_number,
@@ -1016,28 +932,25 @@ for idx, msg in enumerate(st.session_state.messages):
 
             # Case C: Grounded Answer
             else:
-                clean_content = strip_source_citation_text(content)
-                st.markdown(clean_content)
+                st.markdown(content)
 
                 source_file = html.escape(str(resp_data.get("source_filename", "N/A")))
                 page_num = html.escape(str(resp_data.get("page_number", "1")))
                 chunk_id = html.escape(str(resp_data.get("chunk_id", "1")))
                 dist = resp_data.get("distance", 0.0)
                 timestamp = msg.get("timestamp", "")
-                time_html = f'<span class="cite-time">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
+                time_html = f'<span style="color: #64748b; font-size: 0.78rem; font-weight: 400; margin-left: 6px;">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
 
-                st.markdown(
-                    f"""
-                    <div class="cite-pill-row">
-                        <span class="cite-pill">📄 <b>File:</b> {source_file}</span>
-                        <span class="cite-pill">📖 <b>Page:</b> {page_num}</span>
-                        <span class="cite-pill">🧩 <b>Chunk:</b> #{chunk_id}</span>
-                        <span class="cite-pill cite-pill-sim">🎯 <b>Dist:</b> {dist:.4f}</span>
-                        {time_html}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+                pills_html = (
+                    '<div class="cite-pill-row">'
+                    f'<span class="cite-pill">📄 <b>File:</b> {source_file}</span>'
+                    f'<span class="cite-pill">📖 <b>Page:</b> {page_num}</span>'
+                    f'<span class="cite-pill">🧩 <b>Chunk:</b> #{chunk_id}</span>'
+                    f'<span class="cite-pill cite-pill-sim">🎯 <b>Dist:</b> {dist:.4f}</span>'
+                    f'{time_html}'
+                    '</div>'
                 )
+                st.markdown(pills_html, unsafe_allow_html=True)
 
 
 # Handle pending prompt execution
@@ -1098,15 +1011,14 @@ if st.session_state.pending_chat_prompt:
                 )
 
             # Record assistant response
-            clean_answer = strip_source_citation_text(res.answer)
             asst_msg = {
                 "role": "assistant",
-                "content": clean_answer,
+                "content": res.answer,
                 "timestamp": datetime.now().strftime("%I:%M %p"),
                 "response_data": {
                     "status": res.status,
                     "is_found": res.is_found,
-                    "answer": clean_answer,
+                    "answer": res.answer,
                     "question": res.question,
                     "source_filename": res.source_filename,
                     "page_number": res.page_number,

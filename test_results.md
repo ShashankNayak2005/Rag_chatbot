@@ -1,10 +1,10 @@
 # Automated Test Execution & Evaluation Benchmark Results
 
-**Execution Timestamp:** 2026-10-17  
+**Execution Timestamp:** 2026-10-18  
 **Platform:** Windows 11 (win32)  
 **Python Runtime:** Python 3.11.9  
 **Core Frameworks:** pytest 9.1.1, ChromaDB 1.5.9, Sentence Transformers 6.1.0, PyMuPDF 1.23.26, OpenAI SDK 3.31.0  
-**Total Automated Tests:** 105 passed, 0 failed  
+**Total Automated Tests:** 125 passed, 0 failed  
 **Test Suite Pass Rate:** **100.0%**  
 
 ---
@@ -16,19 +16,20 @@
 | `tests/test_end_to_end.py` | Complete pipeline E2E: Datavex (TC1–TC12) & CoastalTech unseen generalization | 2 | 2 | 0 |
 | `tests/test_retrieval.py` | Semantic retrieval, cosine distance ranking, document isolation, TF-IDF | 3 | 3 | 0 |
 | `tests/test_answer_generation.py` | Grounded answer generation, exact fallback enforcement, prompt injection defense | 5 | 5 | 0 |
-| `tests/test_citations.py` | Citation provenance, PDF page tracking, TXT chunk tracking, no false citations | 3 | 3 | 0 |
+| `tests/test_citations.py` | Citation provenance, PDF page tracking, TXT chunk tracking, no duplicate text citations | 5 | 5 | 0 |
 | `tests/test_error_handling.py` | Document ingestion errors, query validation, API errors (auth, 429 rate limit, timeout) | 9 | 9 | 0 |
 | `tests/test_acceptance.py` | Baseline acceptance criteria (TC1 – TC7), edge cases, false-positive guardrails | 13 | 13 | 0 |
-| `tests/test_deepseek_rag.py` | Backend RAG pipeline, mocked OpenAI SDK responses, ChromaDB namespace isolation | 17 | 17 | 0 |
+| `tests/test_groq_rag.py` | Backend RAG pipeline, mocked OpenAI SDK responses, ChromaDB namespace isolation | 17 | 17 | 0 |
 | `tests/test_document_loader.py` | TXT/PDF extraction, empty files, unreadable/corrupted files, scanned PDFs | 10 | 10 | 0 |
 | `tests/test_text_chunker.py` | Token-approximate chunking, overlap, natural boundary lookback, page preservation | 4 | 4 | 0 |
 | `tests/test_chunker.py` | Sliding window character indices and page number metadata | 3 | 3 | 0 |
 | `tests/test_retriever.py` | Semantic & TF-IDF vectorization, cosine similarity, threshold cutoff, query normalization | 5 | 5 | 0 |
 | `tests/test_qa_engine.py` | Answer synthesis, evidence validation, citations, provenance, blank-question validation | 4 | 4 | 0 |
-| `tests/test_rag_engine.py` | Engine initialization, thresholding, factual matching, exact string negative guard | 9 | 9 | 0 |
+| `tests/test_rag_engine.py` | Engine initialization, thresholding, factual matching, exact string negative guard | 8 | 8 | 0 |
+| `tests/test_regression_suite.py` | Tokenizer limit, negative abstention, citations, OCR detection, document isolation, API error handling | 18 | 18 | 0 |
 | `tests/test_extractor.py` | Byte parsing, whitespace files, PyMuPDF page iteration | 8 | 8 | 0 |
 | `tests/test_api.py` | REST integration, document upload, query endpoints, E2E | 11 | 11 | 0 |
-| **TOTAL** | | **105** | **105** | **0** |
+| **TOTAL** | | **125** | **125** | **0** |
 
 ---
 

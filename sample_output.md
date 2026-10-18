@@ -232,3 +232,23 @@ and cybersecurity.
 - **Simulated Timeout:**
   - `status: "api_error"`
   - `error_message: "Request Timed Out: The request took longer than expected to complete. Please try again."`
+
+---
+
+## 6. Streamlit UI Chat Rendering & Provenance Metadata
+
+In the web interface (`app.py`), answers are rendered cleanly without duplicate text citations, followed by a dedicated provenance metadata pill row and execution timestamp:
+
+- **User Message:**
+  `When was the company founded?`
+- **Assistant Response:**
+  `Datavex was founded in the year 2020.`
+- **Grounded Provenance Pills:**
+  ```text
+  [📄 File: datavex_sample.txt] [📖 Page: 1] [🧩 Chunk: #1] [🎯 Dist: 0.6469]  🕒 09:15 AM
+  ```
+- **Abstention Response (Unanswerable/Missing Query):**
+  - **User Message:** `Who is the CEO?`
+  - **Assistant Response:** `ANSWER_NOT_FOUND_IN_DOCUMENT`
+  - **Action:** Negative guardrail triggers; suppresses citations and avoids hallucinating external entities.
+
