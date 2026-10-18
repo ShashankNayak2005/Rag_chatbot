@@ -42,35 +42,7 @@ importlib.reload(src.qa_engine)
 from src.qa_engine import QAEngine, ANSWER_NOT_FOUND_IN_DOCUMENT
 
 
-# Path for persistent conversation history
-CONVERSATION_HISTORY_FILE = Path("data/conversation_history.json")
-
-
-def load_persisted_conversation() -> List[Dict[str, Any]]:
-    """Load conversation history from disk if available."""
-    if CONVERSATION_HISTORY_FILE.exists():
-        try:
-            return json.loads(CONVERSATION_HISTORY_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            return []
-    return []
-
-
-def save_persisted_conversation(messages: List[Dict[str, Any]]) -> None:
-    """Save conversation history to disk."""
-    try:
-        CONVERSATION_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-        serializable = []
-        for m in messages:
-            serializable.append({
-                "role": m.get("role"),
-                "content": m.get("content"),
-                "timestamp": m.get("timestamp"),
-                "response_data": m.get("response_data"),
-            })
-        CONVERSATION_HISTORY_FILE.write_text(json.dumps(serializable, indent=2), encoding="utf-8")
-    except Exception:
-        pass
+# In-memory session chat history is managed via st.session_state
 
 
 def export_conversation_markdown(messages: List[Dict[str, Any]], doc_info: Optional[Dict[str, Any]]) -> str:
@@ -146,7 +118,7 @@ if "sample_filename" not in st.session_state:
 if "is_processing" not in st.session_state:
     st.session_state.is_processing = False
 if "messages" not in st.session_state:
-    st.session_state.messages = load_persisted_conversation()
+    st.session_state.messages = []
 if "pending_chat_prompt" not in st.session_state:
     st.session_state.pending_chat_prompt = None
 if "embedding_service" not in st.session_state:
@@ -657,6 +629,7 @@ def index_file_data(file_bytes: bytes, filename: str, c_size: int, c_overlap: in
             }
             st.session_state.sample_selected = None
             st.session_state.sample_filename = None
+            st.session_state.messages = []
             st.success(f"Indexed '{doc.filename}' ({len(chunks)} chunks)!")
             return True
     except EmptyFileError as e:
@@ -816,6 +789,7 @@ with st.sidebar:
                 st.session_state.qa_engine = None
                 st.session_state.sample_selected = None
                 st.session_state.sample_filename = None
+                st.session_state.messages = []
                 st.rerun()
         with col_vt:
             with st.popover("👁️ View Text", use_container_width=True):
@@ -902,11 +876,6 @@ with st.sidebar:
     with col_c1:
         if st.button("🗑️ Clear Chat", use_container_width=True, disabled=(msg_count == 0)):
             st.session_state.messages = []
-            if CONVERSATION_HISTORY_FILE.exists():
-                try:
-                    CONVERSATION_HISTORY_FILE.unlink()
-                except Exception:
-                    pass
             st.rerun()
 
     with col_c2:
@@ -1108,7 +1077,6 @@ for idx, msg in enumerate(st.session_state.messages):
                                 for p in (fb_res.retrieved_passages or [])
                             ],
                         }
-                        save_persisted_conversation(st.session_state.messages)
                         st.rerun()
 
             # Case B: Refusal / Evidence Absent
@@ -1238,7 +1206,6 @@ if st.session_state.pending_chat_prompt:
             },
         }
         st.session_state.messages.append(asst_msg)
-        save_persisted_conversation(st.session_state.messages)
 
     st.rerun()
 
