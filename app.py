@@ -197,6 +197,37 @@ st.markdown(
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         margin-right: 5%;
     }
+
+    /* Compact citation metadata tags */
+    .cite-pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        margin-bottom: 2px;
+    }
+    .cite-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+    .cite-pill-sim {
+        background: #ecfdf5;
+        color: #047857;
+        border-color: #a7f3d0;
+    }
+    .cite-pill-time {
+        color: #64748b;
+        background: #f8fafc;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -599,10 +630,32 @@ for idx, msg in enumerate(st.session_state.messages):
             # Case B: Refusal / Evidence Absent
             elif not is_found or content == ANSWER_NOT_FOUND_IN_DOCUMENT:
                 st.warning(f"⚠️ **{ANSWER_NOT_FOUND_IN_DOCUMENT}**")
+                if msg.get("timestamp"):
+                    st.caption(f"🕒 {msg.get('timestamp')}")
 
             # Case C: Grounded Answer
             else:
                 st.markdown(content)
+
+                source_file = html.escape(str(resp_data.get("source_filename", "N/A")))
+                page_num = html.escape(str(resp_data.get("page_number", "1")))
+                chunk_id = html.escape(str(resp_data.get("chunk_id", "1")))
+                dist = resp_data.get("distance", 0.0)
+                timestamp = msg.get("timestamp", "")
+                time_html = f'<span class="cite-pill cite-pill-time">🕒 {html.escape(timestamp)}</span>' if timestamp else ""
+
+                st.markdown(
+                    f"""
+                    <div class="cite-pill-row">
+                        <span class="cite-pill">📄 <b>File:</b> {source_file}</span>
+                        <span class="cite-pill">📖 <b>Page:</b> {page_num}</span>
+                        <span class="cite-pill">🧩 <b>Chunk:</b> #{chunk_id}</span>
+                        <span class="cite-pill cite-pill-sim">🎯 <b>Dist:</b> {dist:.4f}</span>
+                        {time_html}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
 
 # Handle pending prompt execution
