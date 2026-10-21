@@ -802,9 +802,7 @@ with st.sidebar:
     with st.expander("⚙️ Advanced Retrieval Settings (Optional)", expanded=False):
         st.markdown("**LLM API Configuration**")
         if settings.has_api_key:
-            st.success(
-                """🔒 **API Key:** Configured in `.env` (Hidden for security)"""
-            )
+            st.success("🔒 **API Key Already Present**")
             override_key = st.checkbox(
                 "Override with custom session key",
                 value=False,
