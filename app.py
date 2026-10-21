@@ -802,7 +802,9 @@ with st.sidebar:
     with st.expander("⚙️ Advanced Retrieval Settings (Optional)", expanded=False):
         st.markdown("**LLM API Configuration**")
         if settings.has_api_key:
-            st.success("🔒 **API Key:** Configured in `.env` (Hidden for security)")
+            st.success(
+                """🔒 **API Key:** Configured in `.env` (Hidden for security)"""
+            )
             override_key = st.checkbox(
                 "Override with custom session key",
                 value=False,
@@ -819,7 +821,9 @@ with st.sidebar:
             else:
                 api_key_input = ""
         else:
-            st.info("ℹ️ **API Key:** Not configured in `.env`. Running in zero-cost offline extractive mode unless an API key is provided below.")
+            st.info(
+                """ℹ️ **API Key:** Not configured in `.env`. Running in zero-cost offline extractive mode unless an API key is provided below."""
+            )
             api_key_input = st.text_input(
                 "API Key (Optional)",
                 value="",
