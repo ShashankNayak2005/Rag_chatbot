@@ -39,8 +39,8 @@ class Settings:
 
     # Local Embeddings & Vector Store
     embedding_model: str = _get_val("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-    chroma_persist_directory: str = _get_val("CHROMA_PERSIST_DIRECTORY", "./chroma_db")
-    retrieval_distance_threshold: float = float(_get_val("RETRIEVAL_DISTANCE_THRESHOLD", "0.85"))
+    chroma_persist_directory: str = _get_val("CHROMA_PERSIST_DIRECTORY") or _get_val("PERSIST_DIRECTORY", "./chroma_db")
+    retrieval_distance_threshold: float = float(_get_val("RETRIEVAL_DISTANCE_THRESHOLD") or _get_val("SIMILARITY_THRESHOLD", "0.85"))
     top_k: int = int(_get_val("TOP_K", "4"))
     retrieval_top_k: int = int(_get_val("TOP_K", "4"))
     chunk_size: int = int(_get_val("CHUNK_SIZE", "800"))

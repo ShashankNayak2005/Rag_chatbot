@@ -648,7 +648,8 @@ def index_file_data(file_bytes: bytes, filename: str, c_size: int, c_overlap: in
 
 
 # Default retrieval & model hyperparameters
-api_key_input = settings.active_api_key if settings.has_api_key else ""
+# Security: Never expose or pre-populate the real API key in the frontend DOM
+api_key_input = ""
 base_url_input = settings.active_base_url
 model_input = settings.active_model
 use_llm = True
@@ -800,13 +801,32 @@ with st.sidebar:
     st.markdown("---")
     with st.expander("⚙️ Advanced Retrieval Settings (Optional)", expanded=False):
         st.markdown("**LLM API Configuration**")
-        api_key_input = st.text_input(
-            "API Key",
-            value=api_key_input,
-            type="password",
-            placeholder="Configured in .env or enter here...",
-            help="API key for high-speed LLM inference. Stored securely in session.",
-        )
+        if settings.has_api_key:
+            st.success("🔒 **API Key:** Configured in `.env` (Hidden for security)")
+            override_key = st.checkbox(
+                "Override with custom session key",
+                value=False,
+                help="Check only if you wish to temporarily use a different API key than the one in .env.",
+            )
+            if override_key:
+                api_key_input = st.text_input(
+                    "Session API Key",
+                    value="",
+                    type="password",
+                    placeholder="Enter custom Groq API key (gsk_...)",
+                    help="Custom key for this session only. Never saved to disk or printed.",
+                ).strip()
+            else:
+                api_key_input = ""
+        else:
+            st.info("ℹ️ **API Key:** Not configured in `.env`. Running in zero-cost offline extractive mode unless an API key is provided below.")
+            api_key_input = st.text_input(
+                "API Key (Optional)",
+                value="",
+                type="password",
+                placeholder="Enter Groq API Key (gsk_...) or leave blank for offline mode",
+                help="Enter a Groq API key for cloud LLM synthesis, or leave blank to use local extractive mode.",
+            ).strip()
         base_url_input = st.text_input(
             "API Base URL",
             value=base_url_input,
